@@ -987,6 +987,8 @@ async function loadPersediaan() {
 
     state.persediaan.forEach(item => {
       const stokAkhir = Number(item.stok_akhir || 0);
+      const category = getOpnameCategory(item.nama_produk);
+      const categoryLabel = getOpnameCategoryLabel(category);
       totalStok += stokAkhir;
       if (stokAkhir <= 0) outStock += 1;
       if (stokAkhir > 0 && stokAkhir <= 10) lowStock += 1;
@@ -995,6 +997,7 @@ async function loadPersediaan() {
         <tr>
           <td>${escapeHtml(item.sku)}</td>
           <td>${escapeHtml(item.nama_produk)}</td>
+          <td><span class="status-badge category-badge category-${category}">${categoryLabel}</span></td>
           <td>${formatNumber(item.stok_awal)}</td>
           <td>${formatNumber(item.pembelian)}</td>
           <td>${formatNumber(item.penjualan)}</td>
@@ -1579,8 +1582,17 @@ function exportCurrentModule() {
   if (currentMenu === "persediaan") {
     downloadCsv(
       `persediaan_${getTahun()}_${getBulan()}.csv`,
-      ["sku", "nama_produk", "opening", "pembelian", "keluar_gudang", "penyesuaian", "stok_akhir"],
-      state.persediaan.map(item => [item.sku, item.nama_produk, item.stok_awal, item.pembelian, item.penjualan, item.penyesuaian, item.stok_akhir])
+      ["sku", "nama_produk", "kategori", "opening", "pembelian", "keluar_gudang", "penyesuaian", "stok_akhir"],
+      state.persediaan.map(item => [
+        item.sku,
+        item.nama_produk,
+        getOpnameCategoryLabel(getOpnameCategory(item.nama_produk)),
+        item.stok_awal,
+        item.pembelian,
+        item.penjualan,
+        item.penyesuaian,
+        item.stok_akhir
+      ])
     );
     return;
   }
@@ -1654,8 +1666,17 @@ function printCurrentView() {
     openPrintWindow({
       title: "Laporan Persediaan Warehouse",
       subtitle: `Periode ${getBulanLabel()} ${getTahun()}`,
-      headers: ["SKU", "Nama Produk", "Opening", "Pembelian", "Keluar Gudang", "Penyesuaian", "Stok Akhir"],
-      rows: state.persediaan.map(item => [item.sku, item.nama_produk, item.stok_awal, item.pembelian, item.penjualan, item.penyesuaian, item.stok_akhir])
+      headers: ["SKU", "Nama Produk", "Kategori", "Opening", "Pembelian", "Keluar Gudang", "Penyesuaian", "Stok Akhir"],
+      rows: state.persediaan.map(item => [
+        item.sku,
+        item.nama_produk,
+        getOpnameCategoryLabel(getOpnameCategory(item.nama_produk)),
+        item.stok_awal,
+        item.pembelian,
+        item.penjualan,
+        item.penyesuaian,
+        item.stok_akhir
+      ])
     });
     return;
   }
