@@ -21,9 +21,17 @@ function sumBy(rows, field) {
   return rows.reduce((sum, item) => sum + Number(item?.[field] || 0), 0);
 }
 
+function buildFallbackFlags(rows) {
+  return rows.map(item => ({
+    ...item,
+    flag: "DB_OUTLET_BELUM_LENGKAP",
+    detail: "Stok outlet belum memakai rolling stock penuh karena tabel audit outlet baru belum selesai di-migrasi."
+  }));
+}
+
 export default async function handler(req, res) {
   try {
-    const { bulan, tahun, sku, outlet } = req.query;
+    const { bulan, tahun, sku, outlet, section = "overview" } = req.query;
     const availability = await getTableAvailability();
     const stockReady = Boolean(
       availability.has_outlet_stok_awal
@@ -38,10 +46,16 @@ export default async function handler(req, res) {
       && availability.has_outlet_level_analysis_view
     );
     const dbReady = stockReady && analysisReady;
+    const needsSummary = section === "overview";
+    const needsOutlet = section === "outlet";
+    const needsLog = section === "log";
+    const needsControl = section === "control";
+    const needsIntegration = section === "integration";
+    const needsAnalysis = section === "overview";
 
     if (dbReady) {
       const [summaryResult, outletResult, movementResult, flagResult, analysisResult] = await Promise.all([
-        pool.query(`
+        needsSummary ? pool.query(`
           WITH params AS (
             SELECT
               make_date($2::int, $1::int, 1) AS start_date,
@@ -114,8 +128,8 @@ export default async function handler(req, res) {
                 AND ($4::text = '' OR nama_outlet = $4)
             ), 0) AS total_outlet,
             COALESCE((SELECT COUNT(*) FROM problem_outlets), 0) AS problem_outlet
-        `, [bulan, tahun, sku || "", outlet || ""]),
-        pool.query(`
+        `, [bulan, tahun, sku || "", outlet || ""]) : Promise.resolve({ rows: [] }),
+        needsOutlet ? pool.query(`
           WITH params AS (
             SELECT make_date($2::int, $1::int, 1) AS start_date
           )
@@ -133,8 +147,8 @@ export default async function handler(req, res) {
             AND ($3::text = '' OR sku = $3)
             AND ($4::text = '' OR nama_outlet = $4)
           ORDER BY nama_outlet, nama_produk
-        `, [bulan, tahun, sku || "", outlet || ""]),
-        pool.query(`
+        `, [bulan, tahun, sku || "", outlet || ""]) : Promise.resolve({ rows: [] }),
+        needsLog ? pool.query(`
           WITH params AS (
             SELECT
               make_date($2::int, $1::int, 1) AS start_date,
@@ -196,8 +210,8 @@ export default async function handler(req, res) {
           ) movement_log
           ORDER BY tanggal DESC, nama_outlet
           LIMIT 500
-        `, [bulan, tahun, sku || "", outlet || ""]),
-        pool.query(`
+        `, [bulan, tahun, sku || "", outlet || ""]) : Promise.resolve({ rows: [] }),
+        needsControl ? pool.query(`
           WITH params AS (
             SELECT make_date($2::int, $1::int, 1) AS start_date
           ),
@@ -248,8 +262,8 @@ export default async function handler(req, res) {
           UNION ALL
           SELECT * FROM analysis_flags
           ORDER BY nama_outlet, sku, flag
-        `, [bulan, tahun, sku || "", outlet || ""]),
-        analysisReady
+        `, [bulan, tahun, sku || "", outlet || ""]) : Promise.resolve({ rows: [] }),
+        needsAnalysis && analysisReady
           ? pool.query(`
               WITH params AS (
                 SELECT make_date($2::int, $1::int, 1) AS start_date
@@ -280,22 +294,24 @@ export default async function handler(req, res) {
 
       return res.status(200).json({
         db_ready: true,
-        summary: summaryResult.rows[0] || {},
-        outlet_summary: outletResult.rows,
-        movements: movementResult.rows,
-        flags: flagResult.rows,
-        analysis: analysisResult.rows,
-        notes: [
-          "Penjualan warehouse ke outlet sekarang harus dimirror ke outlet_stok_masuk pada tanggal yang sama.",
-          "Opening outlet cukup diisi saat awal setup atau ketika ada koreksi. Bulan berikutnya akan memakai rolling closing bulan sebelumnya.",
-          "Stok keluar outlet dibaca langsung dari tabel outlet_penjualan agar audit tidak bercampur dengan penjualan warehouse.",
-          "Analisis level siswa memakai produk_level_mapping dan outlet_siswa_level_bulanan per outlet per bulan."
-        ]
+        ...(needsSummary ? { summary: summaryResult.rows[0] || {} } : {}),
+        ...(needsOutlet ? { outlet_summary: outletResult.rows } : {}),
+        ...(needsLog ? { movements: movementResult.rows } : {}),
+        ...(needsControl ? { flags: flagResult.rows } : {}),
+        ...(needsAnalysis ? { analysis: analysisResult.rows } : {}),
+        ...(needsIntegration ? {
+          notes: [
+            "Penjualan warehouse ke outlet sekarang harus dimirror ke outlet_stok_masuk pada tanggal yang sama.",
+            "Opening outlet cukup diisi saat awal setup atau ketika ada koreksi. Bulan berikutnya akan memakai rolling closing bulan sebelumnya.",
+            "Stok keluar outlet dibaca langsung dari tabel outlet_penjualan agar audit tidak bercampur dengan penjualan warehouse.",
+            "Analisis level siswa memakai produk_level_mapping dan outlet_siswa_level_bulanan per outlet per bulan."
+          ]
+        } : {})
       });
     }
 
     const [summaryResult, outletResult, movementResult] = await Promise.all([
-      pool.query(`
+      needsSummary ? pool.query(`
         WITH params AS (
           SELECT
             make_date($2::int, $1::int, 1) AS start_date,
@@ -328,8 +344,8 @@ export default async function handler(req, res) {
           ) AS total_outlet,
           0 AS problem_outlet
         FROM movement_union
-      `, [bulan, tahun, sku || "", outlet || ""]),
-      pool.query(`
+      `, [bulan, tahun, sku || "", outlet || ""]) : Promise.resolve({ rows: [] }),
+      needsOutlet ? pool.query(`
         WITH params AS (
           SELECT
             make_date($2::int, $1::int, 1) AS start_date,
@@ -371,8 +387,8 @@ export default async function handler(req, res) {
         WHERE ($3::text = '' OR p.sku = $3)
           AND ($4::text = '' OR k.nama_outlet = $4)
         ORDER BY k.nama_outlet, p.nama_produk
-      `, [bulan, tahun, sku || "", outlet || ""]),
-      pool.query(`
+      `, [bulan, tahun, sku || "", outlet || ""]) : Promise.resolve({ rows: [] }),
+      needsLog ? pool.query(`
         WITH params AS (
           SELECT
             make_date($2::int, $1::int, 1) AS start_date,
@@ -414,31 +430,27 @@ export default async function handler(req, res) {
         ) movement_log
         ORDER BY tanggal DESC
         LIMIT 300
-      `, [bulan, tahun, sku || "", outlet || ""])
+      `, [bulan, tahun, sku || "", outlet || ""]) : Promise.resolve({ rows: [] })
     ]);
 
-    const flags = outletResult.rows
+    const flags = buildFallbackFlags(outletResult.rows || [])
       .filter(item => Number(item.stok_akhir || 0) > 0)
-      .map(item => ({
-        nama_outlet: item.nama_outlet,
-        sku: item.sku,
-        flag: "DB_OUTLET_BELUM_LENGKAP",
-        detail: "Stok outlet belum memakai rolling stock penuh karena tabel audit outlet baru belum selesai di-migrasi."
-      }))
       .slice(0, 50);
 
     return res.status(200).json({
       db_ready: false,
-      summary: summaryResult.rows[0] || {},
-      outlet_summary: outletResult.rows,
-      movements: movementResult.rows,
-      flags,
-      analysis: [],
-      notes: [
-        "Jalankan migration_neon_safe.sql agar rolling stock outlet dan analisis level siswa aktif.",
-        "Penjualan warehouse perlu dimirror ke outlet_stok_masuk agar stok masuk outlet otomatis tercatat.",
-        "Siapkan outlet_stok_awal, outlet_penjualan, produk_level_mapping, dan outlet_siswa_level_bulanan untuk audit penuh."
-      ]
+      ...(needsSummary ? { summary: summaryResult.rows[0] || {} } : {}),
+      ...(needsOutlet ? { outlet_summary: outletResult.rows } : {}),
+      ...(needsLog ? { movements: movementResult.rows } : {}),
+      ...(needsControl ? { flags } : {}),
+      ...(needsAnalysis ? { analysis: [] } : {}),
+      ...(needsIntegration ? {
+        notes: [
+          "Jalankan migration_neon_safe.sql agar rolling stock outlet dan analisis level siswa aktif.",
+          "Penjualan warehouse perlu dimirror ke outlet_stok_masuk agar stok masuk outlet otomatis tercatat.",
+          "Siapkan outlet_stok_awal, outlet_penjualan, produk_level_mapping, dan outlet_siswa_level_bulanan untuk audit penuh."
+        ]
+      } : {})
     });
   } catch (err) {
     console.error("AUDIT ERROR:", err);

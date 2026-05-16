@@ -135,6 +135,23 @@ function getAuditOutletFilter() {
   return (document.getElementById("auditOutletFilter")?.value || "").trim();
 }
 
+function getAuditSectionKey(id = "") {
+  const map = {
+    auditOverview: "overview",
+    auditOutletStock: "outlet",
+    auditLog: "log",
+    auditControl: "control",
+    auditIntegration: "integration"
+  };
+  return map[id] || "overview";
+}
+
+function getCurrentAuditSection() {
+  const visible = [...document.querySelectorAll("#auditTab .module-content")]
+    .find(el => el.style.display !== "none");
+  return getAuditSectionKey(visible?.id || "auditOverview");
+}
+
 function getSelectedSku() {
   const raw = getProdukFilter();
   if (!raw) return "";
@@ -347,6 +364,10 @@ function showModuleTab(event, module, id) {
   const target = document.getElementById(id);
   if (target) target.style.display = "block";
   if (event) event.target.classList.add("active-tab");
+
+  if (module === "audit") {
+    loadAudit(getAuditSectionKey(id));
+  }
 }
 
 function showOpnameTab(event, id) {
@@ -401,7 +422,6 @@ function selectMenu(event, menu) {
     document.getElementById("auditTab").style.display = "block";
     showModuleTab(null, "audit", "auditOverview");
     document.querySelector("#auditMenu button")?.classList.add("active-tab");
-    loadAudit();
     return;
   }
 
@@ -436,7 +456,7 @@ async function applyCurrentFilters() {
   }
 
   if (currentMenu === "audit") {
-    await loadAudit();
+    await loadAudit(getCurrentAuditSection());
     return;
   }
 
@@ -1083,159 +1103,202 @@ function selectPersediaanCategory(event, category) {
   renderPersediaanTables();
 }
 
-async function loadAudit() {
+async function loadAudit(section = "overview") {
   showLoader();
   try {
     const qs = getQueryParams();
     const outlet = getAuditOutletFilter();
     if (outlet) qs.set("outlet", outlet);
-    state.audit = toObject(await fetchJson(`/api/audit?${qs.toString()}`));
-    const summary = toObject(state.audit.summary);
-    const movements = toArray(state.audit.movements);
-    const outletSummary = toArray(state.audit.outlet_summary);
-    const flags = toArray(state.audit.flags);
-    const analysis = toArray(state.audit.analysis);
-    const notes = toArray(state.audit.notes);
+    qs.set("section", section);
+    const response = toObject(await fetchJson(`/api/audit?${qs.toString()}`));
 
-    setText("audit_total_log", formatNumber(summary.total_mutasi));
-    setText("audit_penjualan_total", formatNumber(summary.stok_masuk_outlet));
-    setText("audit_pembelian_total", formatNumber(summary.penjualan_outlet));
-    setText("audit_qty_total", formatNumber(summary.qty_bergerak));
-    setText("audit_problem_outlet", formatNumber(summary.problem_outlet));
+    state.audit.db_ready = Boolean(response.db_ready ?? state.audit.db_ready);
+    if ("summary" in response) state.audit.summary = toObject(response.summary);
+    if ("outlet_summary" in response) state.audit.outlet_summary = toArray(response.outlet_summary);
+    if ("movements" in response) state.audit.movements = toArray(response.movements);
+    if ("flags" in response) state.audit.flags = toArray(response.flags);
+    if ("analysis" in response) state.audit.analysis = toArray(response.analysis);
+    if ("notes" in response) state.audit.notes = toArray(response.notes);
 
-    const insightCards = document.getElementById("auditInsightCards");
-    const outletBody = document.getElementById("auditOutletBody");
-    const movementBody = document.getElementById("auditBody");
-    const flagBody = document.getElementById("auditFlagBody");
-    const analysisBody = document.getElementById("auditAnalysisBody");
-    const dbStatus = document.getElementById("auditDbStatus");
-    const notePanel = document.getElementById("auditIntegrationNotes");
-
-    insightCards.innerHTML = "";
-    outletBody.innerHTML = "";
-    movementBody.innerHTML = "";
-    flagBody.innerHTML = "";
-    if (analysisBody) analysisBody.innerHTML = "";
-
-    const insightItems = [
-      {
-        title: "Status Database Audit",
-        detail: state.audit.db_ready
-          ? "Tabel outlet audit sudah tersedia. Penjualan outlet, penyesuaian, dan stok akhir bisa direkonsiliasi penuh."
-          : "Tabel audit outlet belum lengkap. Saat ini stok outlet masih dibaca dari transfer warehouse saja, sehingga kontrol kecurangan belum final."
-      },
-      {
-        title: "Outlet Terpantau",
-        detail: `${formatNumber(summary.total_outlet || 0)} outlet tercakup pada periode ${getBulanLabel()} ${getTahun()}.`
-      },
-      {
-        title: "Flag Audit",
-        detail: `${formatNumber(flags.length)} indikator risiko terdeteksi dan perlu ditindaklanjuti.`
-      },
-      {
-        title: "Analisis Level",
-        detail: analysis.length
-          ? `${formatNumber(analysis.filter(item => Number(item.selisih || 0) !== 0).length)} baris level siswa tidak cocok dengan modul keluar outlet.`
-          : "Belum ada data analisis level siswa untuk periode ini."
-      }
-    ];
-
-    insightItems.forEach(item => {
-      insightCards.innerHTML += `
-        <div class="insight-card">
-          <h4>${escapeHtml(item.title)}</h4>
-          <p>${escapeHtml(item.detail)}</p>
-        </div>
-      `;
-    });
-
-    outletSummary.forEach(item => {
-      outletBody.innerHTML += `
-        <tr>
-          <td>${escapeHtml(item.nama_outlet || "-")}</td>
-          <td>${escapeHtml(item.sku || "-")}</td>
-          <td>${escapeHtml(item.nama_produk || "-")}</td>
-          <td>${formatNumber(item.opening_stok)}</td>
-          <td>${formatNumber(item.stok_masuk)}</td>
-          <td>${formatNumber(item.stok_keluar)}</td>
-          <td>${formatNumber(item.penyesuaian)}</td>
-          <td>${formatNumber(item.stok_akhir)}</td>
-        </tr>
-      `;
-    });
-
-    movements.forEach(item => {
-      movementBody.innerHTML += `
-        <tr>
-          <td>${formatDate(item.tanggal)}</td>
-          <td>${escapeHtml(item.sumber || "-")}</td>
-          <td>${escapeHtml(item.jenis || "-")}</td>
-          <td>${escapeHtml(item.nama_outlet || "-")}</td>
-          <td>${escapeHtml(item.sku || "-")}</td>
-          <td>${formatNumber(item.qty)}</td>
-          <td>${escapeHtml(item.referensi || "-")}</td>
-          <td>${escapeHtml(item.keterangan || "-")}</td>
-        </tr>
-      `;
-    });
-
-    if (!movements.length) {
-      movementBody.innerHTML = `<tr><td colspan="8">Belum ada mutasi pada periode ini.</td></tr>`;
-    }
-
-    flags.forEach(item => {
-      flagBody.innerHTML += `
-        <tr>
-          <td>${escapeHtml(item.nama_outlet || "-")}</td>
-          <td>${escapeHtml(item.sku || "-")}</td>
-          <td>${escapeHtml(item.flag || "-")}</td>
-          <td>${escapeHtml(item.detail || "-")}</td>
-        </tr>
-      `;
-    });
-
-    if (!flags.length) {
-      flagBody.innerHTML = `<tr><td colspan="4">Belum ada flag audit pada periode ini.</td></tr>`;
-    }
-
-    if (analysisBody) {
-      analysis.forEach(item => {
-        const diff = Number(item.selisih || 0);
-        const badgeClass = diff === 0 ? "status-safe" : diff > 0 ? "status-low" : "status-out";
-        analysisBody.innerHTML += `
-          <tr>
-            <td>${escapeHtml(item.nama_outlet || "-")}</td>
-            <td>${escapeHtml(item.level_code || "-")}</td>
-            <td>${formatNumber(item.jumlah_siswa)}</td>
-            <td>${formatNumber(item.modul_keluar)}</td>
-            <td>${formatNumber(item.target_modul)}</td>
-            <td>${formatNumber(diff)}</td>
-            <td><span class="status-badge ${badgeClass}">${escapeHtml(item.status || "-")}</span></td>
-          </tr>
-        `;
-      });
-
-      if (!analysis.length) {
-        analysisBody.innerHTML = `<tr><td colspan="7">Belum ada data analisis level siswa pada periode ini.</td></tr>`;
-      }
-    }
-
-    dbStatus.textContent = state.audit.db_ready
-      ? "Siap dipakai. Modul audit outlet sudah membaca rolling stock, stok keluar outlet, dan analisis level siswa."
-      : "Belum lengkap. Jalankan migrasi audit baru agar rolling stock outlet dan analisis level siswa aktif.";
-
-    notePanel.innerHTML = `
-      <h4>Instruksi Sinkron API & DB</h4>
-      <ul>
-        ${notes.map(note => `<li>${escapeHtml(note)}</li>`).join("")}
-      </ul>
-    `;
+    if (section === "overview") renderAuditOverview();
+    if (section === "outlet") renderAuditOutletTable();
+    if (section === "log") renderAuditMovementTable();
+    if (section === "control") renderAuditFlagTable();
+    if (section === "integration") renderAuditIntegration();
   } catch (error) {
     console.error("Audit error:", error);
     showToast(error.message || "Gagal memuat audit", false);
   } finally {
     hideLoader();
   }
+}
+
+function renderAuditOverview() {
+  const summary = toObject(state.audit.summary);
+  const flags = toArray(state.audit.flags);
+  const analysis = toArray(state.audit.analysis);
+  const insightCards = document.getElementById("auditInsightCards");
+  const analysisBody = document.getElementById("auditAnalysisBody");
+  if (!insightCards || !analysisBody) return;
+
+  setText("audit_total_log", formatNumber(summary.total_mutasi));
+  setText("audit_penjualan_total", formatNumber(summary.stok_masuk_outlet));
+  setText("audit_pembelian_total", formatNumber(summary.penjualan_outlet));
+  setText("audit_qty_total", formatNumber(summary.qty_bergerak));
+  setText("audit_problem_outlet", formatNumber(summary.problem_outlet));
+
+  insightCards.innerHTML = "";
+  analysisBody.innerHTML = "";
+
+  const insightItems = [
+    {
+      title: "Status Database Audit",
+      detail: state.audit.db_ready
+        ? "Audit sudah memakai rolling stock, stok keluar outlet, dan analisis level siswa."
+        : "Migrasi audit belum lengkap. Sistem masih perlu penyempurnaan struktur database."
+    },
+    {
+      title: "Outlet Terpantau",
+      detail: `${formatNumber(summary.total_outlet || 0)} outlet tercakup pada periode ${getBulanLabel()} ${getTahun()}.`
+    },
+    {
+      title: "Flag Audit",
+      detail: `${formatNumber(flags.length)} indikator risiko terdeteksi pada ringkasan audit.`
+    },
+    {
+      title: "Analisis Level",
+      detail: analysis.length
+        ? `${formatNumber(analysis.filter(item => Number(item.selisih || 0) !== 0).length)} baris level siswa tidak cocok dengan modul keluar outlet.`
+        : "Belum ada data analisis level siswa untuk periode ini."
+    }
+  ];
+
+  insightItems.forEach(item => {
+    insightCards.innerHTML += `
+      <div class="insight-card">
+        <h4>${escapeHtml(item.title)}</h4>
+        <p>${escapeHtml(item.detail)}</p>
+      </div>
+    `;
+  });
+
+  analysis.forEach(item => {
+    const diff = Number(item.selisih || 0);
+    const badgeClass = diff === 0 ? "status-safe" : diff > 0 ? "status-low" : "status-out";
+    analysisBody.innerHTML += `
+      <tr>
+        <td>${escapeHtml(item.nama_outlet || "-")}</td>
+        <td>${escapeHtml(item.level_code || "-")}</td>
+        <td>${formatNumber(item.jumlah_siswa)}</td>
+        <td>${formatNumber(item.modul_keluar)}</td>
+        <td>${formatNumber(item.target_modul)}</td>
+        <td>${formatNumber(diff)}</td>
+        <td><span class="status-badge ${badgeClass}">${escapeHtml(item.status || "-")}</span></td>
+      </tr>
+    `;
+  });
+
+  if (!analysis.length) {
+    analysisBody.innerHTML = `<tr><td colspan="7">Belum ada data analisis level siswa pada periode ini.</td></tr>`;
+  }
+}
+
+function renderAuditOutletTable() {
+  const outletSummary = toArray(state.audit.outlet_summary);
+  const outletBody = document.getElementById("auditOutletBody");
+  if (!outletBody) return;
+
+  outletBody.innerHTML = "";
+  outletSummary.forEach(item => {
+    outletBody.innerHTML += `
+      <tr>
+        <td>${escapeHtml(item.nama_outlet || "-")}</td>
+        <td>${escapeHtml(item.sku || "-")}</td>
+        <td>${escapeHtml(item.nama_produk || "-")}</td>
+        <td>${formatNumber(item.opening_stok)}</td>
+        <td>${formatNumber(item.stok_masuk)}</td>
+        <td>${formatNumber(item.stok_keluar)}</td>
+        <td>${formatNumber(item.penyesuaian)}</td>
+        <td>${formatNumber(item.stok_akhir)}</td>
+      </tr>
+    `;
+  });
+
+  if (!outletSummary.length) {
+    outletBody.innerHTML = `<tr><td colspan="8">Belum ada data stok outlet pada periode ini.</td></tr>`;
+  }
+}
+
+function renderAuditMovementTable() {
+  const movements = toArray(state.audit.movements);
+  const movementBody = document.getElementById("auditBody");
+  if (!movementBody) return;
+
+  movementBody.innerHTML = "";
+  movements.forEach(item => {
+    movementBody.innerHTML += `
+      <tr>
+        <td>${formatDate(item.tanggal)}</td>
+        <td>${escapeHtml(item.sumber || "-")}</td>
+        <td>${escapeHtml(item.jenis || "-")}</td>
+        <td>${escapeHtml(item.nama_outlet || "-")}</td>
+        <td>${escapeHtml(item.sku || "-")}</td>
+        <td>${formatNumber(item.qty)}</td>
+        <td>${escapeHtml(item.referensi || "-")}</td>
+        <td>${escapeHtml(item.keterangan || "-")}</td>
+      </tr>
+    `;
+  });
+
+  if (!movements.length) {
+    movementBody.innerHTML = `<tr><td colspan="8">Belum ada mutasi pada periode ini.</td></tr>`;
+  }
+}
+
+function renderAuditFlagTable() {
+  const flags = toArray(state.audit.flags);
+  const flagBody = document.getElementById("auditFlagBody");
+  if (!flagBody) return;
+
+  flagBody.innerHTML = "";
+  flags.forEach(item => {
+    flagBody.innerHTML += `
+      <tr>
+        <td>${escapeHtml(item.nama_outlet || "-")}</td>
+        <td>${escapeHtml(item.sku || "-")}</td>
+        <td>${escapeHtml(item.flag || "-")}</td>
+        <td>${escapeHtml(item.detail || "-")}</td>
+      </tr>
+    `;
+  });
+
+  if (!flags.length) {
+    flagBody.innerHTML = `<tr><td colspan="4">Belum ada flag audit pada periode ini.</td></tr>`;
+  }
+}
+
+function renderAuditIntegration() {
+  const dbStatus = document.getElementById("auditDbStatus");
+  const notePanel = document.getElementById("auditIntegrationNotes");
+  if (!dbStatus || !notePanel) return;
+
+  dbStatus.textContent = state.audit.db_ready
+    ? "Siap dipakai. Audit sudah memakai query bertahap agar menu lebih ringan dibuka."
+    : "Migrasi audit belum lengkap. Jalankan SQL migrasi baru agar query audit lebih stabil dan akurat.";
+
+  const notes = [
+    ...toArray(state.audit.notes),
+    "Gunakan filter Outlet atau Produk sebelum membuka tabel berat seperti Mutasi dan Stok Outlet.",
+    "Mulai dari tab Ringkasan dulu. Tab lain sekarang dimuat saat dibuka agar browser tidak cepat berat.",
+    "Jika data outlet sangat besar, pastikan index pada migration_neon_safe.sql sudah dijalankan di database."
+  ];
+
+  notePanel.innerHTML = `
+    <h4>Instruksi Sinkron API & DB</h4>
+    <ul>
+      ${notes.map(note => `<li>${escapeHtml(note)}</li>`).join("")}
+    </ul>
+  `;
 }
 
 async function loadForecast() {
