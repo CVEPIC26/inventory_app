@@ -1,0 +1,192 @@
+# Utility functions untuk authentication dan security
+import os
+import jwt
+import hashlib
+from datetime import datetime, timedelta
+from functools import wraps
+from flask import request, jsonify, current_app
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_jwt
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_app.models import User, UserSession, db
+
+class AuthService:
+    """Service untuk menangani authentication"""
+    
+    @staticmethod
+    def hash_password(password: str) -> str:
+        """Hash password menggunakan werkzeug"""
+        return generate_password_hash(password, method='pbkdf2:sha256')
+    
+    @staticmethod
+    def verify_password(password: str, hashed: str) -> bool:
+        """Verify password"""
+        return check_password_hash(hashed, password)
+    
+    @staticmethod
+    def create_tokens(user_id: int, username: str, role: str):
+        """Create access dan refresh tokens"""
+        additional_claims = {
+            'username': username,
+            'role': role,
+            'user_id': user_id
+        }
+        
+        access_token = create_access_token(
+            identity=user_id,
+            additional_claims=additional_claims
+        )
+        refresh_token = create_refresh_token(
+            identity=user_id,
+            additional_claims=additional_claims
+        )
+        
+        return {
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'expires_in': current_app.config['JWT_ACCESS_TOKEN_EXPIRES'].total_seconds()
+        }
+    
+    @staticmethod
+    def login(username: str, password: str, ip_address: str = None, user_agent: str = None):
+        """Login user"""
+        user = User.query.filter_by(username=username).first()
+        
+        if not user or not AuthService.verify_password(password, user.password_hash):
+            if user:
+                user.failed_login_count += 1
+                db.session.commit()
+            return None, "Invalid username or password"
+        
+        if not user.is_active:
+            return None, "User account is inactive"
+        
+        # Reset failed login count
+        user.failed_login_count = 0
+        user.last_login = datetime.utcnow()
+        
+        # Create session
+        tokens = AuthService.create_tokens(user.id, user.username, str(user.role.value))
+        
+        session = UserSession(
+            user_id=user.id,
+            session_token=tokens['access_token'],
+            ip_address=ip_address,
+            user_agent=user_agent,
+            is_active=True
+        )
+        
+        db.session.add(session)
+        db.session.commit()
+        
+        return {
+            'user_id': user.id,
+            'username': user.username,
+            'nama_lengkap': user.nama_lengkap,
+            'role': str(user.role.value),
+            'outlet_id': user.outlet_id,
+            **tokens
+        }, None
+    
+    @staticmethod
+    def logout(user_id: int):
+        """Logout user"""
+        session = UserSession.query.filter_by(user_id=user_id, is_active=True).first()
+        if session:
+            session.is_active = False
+            session.logout_at = datetime.utcnow()
+            db.session.commit()
+        return True
+    
+    @staticmethod
+    def register_user(username: str, email: str, password: str, nama_lengkap: str, role: str = 'staff_gudang'):
+        """Register new user"""
+        # Check if user exists
+        if User.query.filter_by(username=username).first():
+            return None, "Username already exists"
+        
+        if User.query.filter_by(email=email).first():
+            return None, "Email already exists"
+        
+        user = User(
+            username=username,
+            email=email,
+            password_hash=AuthService.hash_password(password),
+            nama_lengkap=nama_lengkap,
+            role=role
+        )
+        
+        try:
+            db.session.add(user)
+            db.session.commit()
+            return user, None
+        except Exception as e:
+            db.session.rollback()
+            return None, str(e)
+
+def login_required(f):
+    """Decorator untuk check login"""
+    @wraps(f)
+    @jwt_required()
+    def decorated_function(*args, **kwargs):
+        try:
+            current_user_id = get_jwt_identity()
+            user = User.query.get(current_user_id)
+            
+            if not user or not user.is_active:
+                return jsonify({'error': 'User not found or inactive'}), 401
+            
+            return f(*args, **kwargs)
+        except Exception as e:
+            return jsonify({'error': str(e)}), 401
+    
+    return decorated_function
+
+def role_required(*roles):
+    """Decorator untuk check role"""
+    def decorator(f):
+        @wraps(f)
+        @jwt_required()
+        def decorated_function(*args, **kwargs):
+            try:
+                claims = get_jwt()
+                user_role = claims.get('role')
+                
+                if user_role not in roles:
+                    return jsonify({'error': 'Access denied. Required roles: ' + ', '.join(roles)}), 403
+                
+                return f(*args, **kwargs)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 403
+        
+        return decorated_function
+    return decorator
+
+def outlet_access_required(f):
+    """Decorator untuk check outlet access"""
+    @wraps(f)
+    @jwt_required()
+    def decorated_function(*args, **kwargs):
+        try:
+            claims = get_jwt()
+            user_id = claims.get('user_id')
+            user_role = claims.get('role')
+            outlet_id = request.args.get('outlet_id', type=int)
+            
+            if outlet_id is None:
+                return jsonify({'error': 'outlet_id parameter required'}), 400
+            
+            user = User.query.get(user_id)
+            
+            # Admin bisa access semua outlet
+            if user_role == 'admin':
+                return f(*args, **kwargs)
+            
+            # Non-admin hanya bisa access outlet mereka
+            if user.outlet_id and user.outlet_id != outlet_id:
+                return jsonify({'error': 'Access denied to this outlet'}), 403
+            
+            return f(*args, **kwargs)
+        except Exception as e:
+            return jsonify({'error': str(e)}), 403
+    
+    return decorated_function
