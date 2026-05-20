@@ -607,7 +607,7 @@ button:hover {
 
 .kpi-box p {
   margin: 0 0 8px;
-  color: var(--muted);
+  color: #475569;
   font-size: 13px;
 }
 
@@ -615,6 +615,7 @@ button:hover {
   margin: 0;
   font-size: 26px;
   line-height: 1.2;
+  color: #0f172a;
 }
 
 .grid-2 {

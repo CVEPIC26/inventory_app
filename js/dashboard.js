@@ -1853,11 +1853,36 @@ async function importOpnameCSV() {
   document.querySelector('.tab-menu-opname button:nth-child(2)')?.classList.add('active-tab');
 }
 
-function startOpnameScanner() {
+function loadScannerLibrary() {
+  return new Promise((resolve, reject) => {
+    if (window.Html5Qrcode) {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/minified/html5-qrcode.min.js';
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Gagal memuat library scanner'));
+    document.head.appendChild(script);
+  });
+}
+
+async function startOpnameScanner() {
   const scanContainer = document.getElementById('scannerPreview');
-  if (!scanContainer || !window.Html5Qrcode) {
-    showToast('Library scanner tidak tersedia', false);
+  if (!scanContainer) {
+    showToast('Container scanner tidak ditemukan', false);
     return;
+  }
+
+  if (!window.Html5Qrcode) {
+    try {
+      await loadScannerLibrary();
+    } catch (error) {
+      console.error(error);
+      showToast('Library scanner tidak tersedia', false);
+      return;
+    }
   }
 
   if (opnameScanner) {
