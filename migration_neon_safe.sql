@@ -81,6 +81,8 @@ CREATE TABLE IF NOT EXISTS stok_opname (
   tanggal DATE NOT NULL,
   total_item INTEGER NOT NULL DEFAULT 0,
   total_selisih INTEGER NOT NULL DEFAULT 0,
+  checker VARCHAR(150),
+  lokasi VARCHAR(150),
   keterangan TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
@@ -91,7 +93,8 @@ CREATE TABLE IF NOT EXISTS stok_opname_detail (
   sku VARCHAR(50) NOT NULL REFERENCES produk(sku),
   stok_sistem INTEGER NOT NULL,
   stok_fisik INTEGER NOT NULL,
-  selisih INTEGER NOT NULL
+  selisih INTEGER NOT NULL,
+  input_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS outlet_stok_awal (

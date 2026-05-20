@@ -216,6 +216,12 @@ function formatDate(dateString) {
   return new Date(dateString).toLocaleDateString("id-ID");
 }
 
+function formatDateTime(dateString) {
+  if (!dateString) return "-";
+  const date = new Date(dateString);
+  return `${date.toLocaleDateString("id-ID")} ${date.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })}`;
+}
+
 function escapeHtml(value = "") {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -1587,7 +1593,7 @@ async function loadStokSistem() {
       const stokLabel = item.stok_sistem ?? item.qty_stok ?? item.stok ?? 0;
 
       body.innerHTML += `
-        <tr id="row-${escapeHtml(skuValue)}" data-category="${category}" data-rak-barcode="${escapeHtml(item.rak_barcode || '')}" data-visible="false" style="display:none;">
+        <tr id="row-${escapeHtml(skuValue)}" data-category="${category}" data-rak-barcode="${escapeHtml(item.rak_barcode || '')}" data-visible="false" data-scanned="false" style="display:none;">
           <td>${escapeHtml(skuValue)}</td>
           <td>${escapeHtml(namaValue)}</td>
           <td>${rakLabel}</td>
@@ -1609,7 +1615,6 @@ async function loadStokSistem() {
       `;
     });
 
-    setText('sum_total', formatNumber(state.opname.length));
     updateSummary();
     filterOpname();
   } catch (error) {
@@ -1660,11 +1665,13 @@ function saveScannedOpnameRow(sku) {
 
   const row = document.getElementById(`row-${sku}`);
   if (row) {
+    row.dataset.scanned = 'true';
     row.dataset.visible = 'false';
     row.style.display = 'none';
     row.classList.remove('active-opname-row');
   }
 
+  updateSummary();
   document.getElementById('scanOpnameResult').value = '';
   document.getElementById('scanOpnameStatus').textContent = `Mode scan: ${opnameScannerMode}`;
   showToast(`Data ${sku} disimpan. Lanjut scan berikutnya.`);
@@ -1695,25 +1702,30 @@ function updateSummary() {
   let totalFisik = 0;
   let totalSelisih = 0;
   let problem = 0;
+  let scannedCount = 0;
 
   document.querySelectorAll('#opnameBody tr').forEach(row => {
+    if (row.dataset.scanned !== 'true') return;
+
     const sku = row.id.replace('row-', '');
     const sistem = Number((document.getElementById(`sys-${sku}`)?.textContent || '0').replace(/\./g, '').replace(/,/g, ''));
     const input = document.getElementById(`fisik-${sku}`);
     const fisik = input?.value === '' ? sistem : Number(input?.value || 0);
     const selisih = fisik - sistem;
 
+    scannedCount += 1;
     totalSistem += sistem;
     totalFisik += fisik;
     totalSelisih += selisih;
     if (selisih !== 0) problem += 1;
   });
 
-  setText('kpi_opname_total', formatNumber(document.querySelectorAll('#opnameBody tr').length));
+  setText('kpi_opname_total', formatNumber(scannedCount));
   setText('kpi_opname_sistem', formatNumber(totalSistem));
   setText('kpi_opname_fisik', formatNumber(totalFisik));
   setText('kpi_opname_selisih', formatNumber(totalSelisih));
   setText('kpi_opname_problem', formatNumber(problem));
+  setText('sum_total', formatNumber(scannedCount));
   setText('sum_selisih', formatNumber(totalSelisih));
   setText('sum_problem', formatNumber(problem));
 }
@@ -1756,6 +1768,8 @@ async function loadHistory() {
       body.innerHTML += `
         <tr>
           <td>${formatDate(item.tanggal)}</td>
+          <td>${escapeHtml(item.checker || '-')}</td>
+          <td>${escapeHtml(item.lokasi || '-')}</td>
           <td>${formatNumber(item.total_item)}</td>
           <td>${formatNumber(item.total_selisih)}</td>
         </tr>
@@ -1763,7 +1777,7 @@ async function loadHistory() {
     });
 
     if (!data.length) {
-      body.innerHTML = `<tr><td colspan="3">Belum ada history opname pada periode ini.</td></tr>`;
+      body.innerHTML = `<tr><td colspan="5">Belum ada history opname pada periode ini.</td></tr>`;
     }
   } catch (error) {
     console.error('History opname error:', error);
@@ -1771,18 +1785,57 @@ async function loadHistory() {
   }
 }
 
+async function exportOpnameHistory() {
+  try {
+    const { bulan, tahun } = getOpnameRange();
+    const qs = new URLSearchParams({ bulan, tahun, detail: 'true' });
+    const data = await fetchJson(`/api/opname-history?${qs.toString()}`);
+
+    if (!data?.details?.length) {
+      showToast('Tidak ada detail history opname untuk diekspor', false);
+      return;
+    }
+
+    downloadCsv(
+      `opname_history_${tahun}_${String(bulan).padStart(2, '0')}.csv`,
+      ['opname_id', 'tanggal', 'checker', 'lokasi', 'created_at', 'sku', 'nama_produk', 'stok_sistem', 'stok_fisik', 'selisih', 'input_at'],
+      data.details.map(row => [
+        row.opname_id,
+        formatDate(row.tanggal),
+        row.checker || '',
+        row.lokasi || '',
+        formatDateTime(row.created_at),
+        row.sku,
+        row.nama_produk || '',
+        row.stok_sistem,
+        row.stok_fisik,
+        row.selisih,
+        formatDateTime(row.input_at)
+      ])
+    );
+  } catch (error) {
+    console.error('Export history error:', error);
+    showToast(error.message || 'Gagal mengekspor history opname', false);
+  }
+}
+
 async function simpanOpname() {
   const { bulan, tahun, startDate } = getOpnameRange();
-  const items = [...document.querySelectorAll('#opnameBody tr')].map(row => {
-    const sku = row.children[0].textContent.trim();
-    const sistem = Number((document.getElementById(`sys-${sku}`)?.textContent || '0').replace(/\./g, '').replace(/,/g, ''));
-    const input = document.getElementById(`fisik-${sku}`);
-    const fisik = input?.value === '' ? sistem : Number(input?.value || 0);
-    return { sku, sistem, fisik };
-  }).filter(item => item.sku);
+  const checker = document.getElementById('opnameChecker')?.value?.trim();
+  const lokasi = document.getElementById('opnameGudang')?.value?.trim();
+
+  const items = [...document.querySelectorAll('#opnameBody tr')]
+    .filter(row => row.dataset.scanned === 'true')
+    .map(row => {
+      const sku = row.children[0].textContent.trim();
+      const sistem = Number((document.getElementById(`sys-${sku}`)?.textContent || '0').replace(/\./g, '').replace(/,/g, ''));
+      const input = document.getElementById(`fisik-${sku}`);
+      const fisik = input?.value === '' ? sistem : Number(input?.value || 0);
+      return { sku, sistem, fisik };
+    });
 
   if (!items.length) {
-    showToast('Tidak ada data opname untuk disimpan', false);
+    showToast('Tidak ada data opname yang sudah discan untuk disimpan', false);
     return;
   }
 
@@ -1790,6 +1843,8 @@ async function simpanOpname() {
   try {
     const body = {
       tanggal: startDate,
+      checker,
+      lokasi,
       items
     };
 
@@ -1800,6 +1855,7 @@ async function simpanOpname() {
     });
 
     showToast(data.message || 'Opname berhasil disimpan');
+    resetOpnameScanState();
     await loadStokSistem();
     await loadHistory();
   } catch (error) {
@@ -1811,15 +1867,17 @@ async function simpanOpname() {
 }
 
 function exportOpname() {
-  const rows = [...document.querySelectorAll('#opnameBody tr')].map(row => {
-    const sku = row.children[0].textContent.trim();
-    const kategori = row.children[3].textContent.trim();
-    const sistem = row.children[4].textContent.trim();
-    const input = document.getElementById(`fisik-${sku}`);
-    const fisik = input?.value === '' ? sistem : input?.value || '0';
-    const selisih = Number(String(fisik).replace(/\./g, '').replace(/,/g, '')) - Number(String(sistem).replace(/\./g, '').replace(/,/g, ''));
-    return [sku, row.children[1].textContent.trim(), row.children[2].textContent.trim(), kategori, sistem, fisik, selisih];
-  });
+  const rows = [...document.querySelectorAll('#opnameBody tr')]
+    .filter(row => row.dataset.scanned === 'true')
+    .map(row => {
+      const sku = row.children[0].textContent.trim();
+      const kategori = row.children[3].textContent.trim();
+      const sistem = row.children[4].textContent.trim();
+      const input = document.getElementById(`fisik-${sku}`);
+      const fisik = input?.value === '' ? sistem : input?.value || '0';
+      const selisih = Number(String(fisik).replace(/\./g, '').replace(/,/g, '')) - Number(String(sistem).replace(/\./g, '').replace(/,/g, ''));
+      return [sku, row.children[1].textContent.trim(), row.children[2].textContent.trim(), kategori, sistem, fisik, selisih];
+    });
 
   downloadCsv(`opname_${getTahun()}_${getBulan()}.csv`, ['sku', 'nama_produk', 'rak', 'kategori', 'stok_sistem', 'stok_fisik', 'selisih'], rows);
 }
@@ -1993,6 +2051,17 @@ function stopOpnameScanner() {
   });
 }
 
+function resetOpnameScanState() {
+  stopOpnameScanner();
+  opnameScannerMode = 'barang';
+  const modeSelect = document.getElementById('opnameScanMode');
+  if (modeSelect) modeSelect.value = 'barang';
+  const resultEl = document.getElementById('scanOpnameResult');
+  if (resultEl) resultEl.value = '';
+  const statusEl = document.getElementById('scanOpnameStatus');
+  if (statusEl) statusEl.textContent = 'Mode scan: Barang';
+}
+
 function setOpnameScannerMode(mode) {
   opnameScannerMode = mode;
   document.getElementById('scanOpnameStatus').textContent = `Mode scan: ${mode}`;
@@ -2030,10 +2099,12 @@ function printOpname() {
   const checker = document.getElementById('opnameChecker')?.value?.trim() || '................................';
   const gudang = document.getElementById('opnameGudang')?.value?.trim() || '................................';
   const category = document.getElementById('opnamePrintCategory')?.value || 'all';
-  const rows = [...document.querySelectorAll('#opnameBody tr')].filter(row => category === 'all' || row.dataset.category === category);
+  const rows = [...document.querySelectorAll('#opnameBody tr')]
+    .filter(row => row.dataset.scanned === 'true')
+    .filter(row => category === 'all' || row.dataset.category === category);
 
   if (!rows.length) {
-    showToast('Tidak ada data opname untuk kategori yang dipilih', false);
+    showToast('Tidak ada data opname yang sudah discan untuk kategori yang dipilih', false);
     return;
   }
 

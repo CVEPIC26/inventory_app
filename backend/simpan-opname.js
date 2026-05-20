@@ -3,7 +3,7 @@ import pool from "../services/db.js";
 export default async function handler(req, res) {
   const client = await pool.connect();
   try {
-    const { tanggal, items, keterangan } = req.body;
+    const { tanggal, items, checker, lokasi, keterangan } = req.body;
 
     if (!tanggal || !Array.isArray(items)) {
       return res.status(400).json({ error: "Payload tidak valid" });
@@ -13,16 +13,16 @@ export default async function handler(req, res) {
 
     // 1) HEADER
     const header = await client.query(`
-      INSERT INTO stok_opname (tanggal, total_item, total_selisih, keterangan)
-      VALUES ($1, $2, 0, $3)
+      INSERT INTO stok_opname (tanggal, total_item, total_selisih, checker, lokasi, keterangan)
+      VALUES ($1, $2, 0, $3, $4, $5)
       RETURNING id
-    `, [tanggal, items.length, keterangan || null]);
+    `, [tanggal, items.length, checker || null, lokasi || null, keterangan || null]);
 
     const opnameId = header.rows[0].id;
 
     let totalSelisih = 0;
 
-    // 2) DETAIL + 3) PENYESUAIAN
+    // 2) DETAIL opname fisik saja, tanpa otomatis menyesuaikan stok.
     for (const it of items) {
       const sku = it.sku;
       const sistem = Number(it.sistem || 0);
@@ -31,25 +31,12 @@ export default async function handler(req, res) {
 
       totalSelisih += Math.abs(selisih);
 
-      // simpan detail
+      // simpan detail fisik opname
       await client.query(`
         INSERT INTO stok_opname_detail
-        (opname_id, sku, stok_sistem, stok_fisik, selisih)
-        VALUES ($1,$2,$3,$4,$5)
+        (opname_id, sku, stok_sistem, stok_fisik, selisih, input_at)
+        VALUES ($1,$2,$3,$4,$5,NOW())
       `, [opnameId, sku, sistem, fisik, selisih]);
-
-      // simpan penyesuaian (hanya kalau beda)
-      if (selisih !== 0) {
-        await client.query(`
-          INSERT INTO stok_penyesuaian (tanggal, sku, qty, keterangan)
-          VALUES ($1,$2,$3,$4)
-        `, [
-          tanggal,
-          sku,
-          selisih, // bisa negatif/positif
-          `Opname #${opnameId}`
-        ]);
-      }
     }
 
     // update total selisih di header
@@ -61,7 +48,7 @@ export default async function handler(req, res) {
 
     await client.query("COMMIT");
 
-    res.json({ message: "Opname tersimpan & stok disesuaikan", opname_id: opnameId });
+    res.json({ message: "Opname fisik tersimpan", opname_id: opnameId });
 
   } catch (err) {
     await client.query("ROLLBACK");

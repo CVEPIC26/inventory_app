@@ -792,11 +792,16 @@
         </div>
 
         <div id="opnameHistory" class="opname-content" style="display:none;">
-          <div class="table-shell">
+          <div class="section-actions">
+            <button class="btn-secondary" onclick="exportOpnameHistory()">Download History CSV</button>
+          </div>
+          <div class="table-shell top-space">
             <table class="table">
               <thead>
                 <tr>
                   <th>Tanggal</th>
+                  <th>Checker</th>
+                  <th>Lokasi</th>
                   <th>Total Item</th>
                   <th>Total Selisih</th>
                 </tr>

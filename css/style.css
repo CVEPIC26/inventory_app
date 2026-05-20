@@ -644,6 +644,87 @@ button:hover {
   box-shadow: var(--shadow-soft);
 }
 
+#opnameHistory .table-shell {
+  background: #ffffff;
+}
+
+#opnameHistory .table th,
+#opnameHistory .table td {
+  color: #2c2c2c;
+}
+
+#opnameHistory .section-actions {
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+#opnameHistory .btn-secondary {
+  background: #f8f3ef;
+  color: #2c2c2c;
+  border-color: #e6d2c7;
+}
+
+@media (max-width: 900px) {
+  .opname-content {
+    padding: 18px;
+  }
+
+  .opname-tools,
+  .opname-summary,
+  .scanner-panel,
+  .opname-print-panel,
+  .section-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .opname-tools input,
+  .opname-tools select,
+  .print-meta-grid input,
+  .print-meta-grid select,
+  .scanner-summary input,
+  .opname-print-panel button,
+  .section-actions button {
+    width: 100%;
+  }
+
+  .opname-summary {
+    padding: 16px;
+  }
+
+  .scanner-preview {
+    min-height: 220px;
+  }
+
+  .table th,
+  .table td {
+    padding: 12px 10px;
+    font-size: 13px;
+  }
+
+  .mini-tab-strip button {
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
+@media (max-width: 640px) {
+  .scanner-actions,
+  .scanner-panel-header,
+  .scanner-summary,
+  .print-meta-grid,
+  .opname-tools,
+  .print-meta-grid,
+  .mini-tab-strip,
+  .section-actions {
+    gap: 10px;
+  }
+
+  .scanner-preview {
+    min-height: 180px;
+  }
+}
+
 .table-wrapper {
   max-height: 440px;
 }
