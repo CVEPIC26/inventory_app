@@ -1587,7 +1587,7 @@ async function loadStokSistem() {
       const stokLabel = item.stok_sistem ?? item.qty_stok ?? item.stok ?? 0;
 
       body.innerHTML += `
-        <tr id="row-${escapeHtml(skuValue)}" data-category="${category}" data-rak-barcode="${escapeHtml(item.rak_barcode || '')}">
+        <tr id="row-${escapeHtml(skuValue)}" data-category="${category}" data-rak-barcode="${escapeHtml(item.rak_barcode || '')}" data-visible="false" style="display:none;">
           <td>${escapeHtml(skuValue)}</td>
           <td>${escapeHtml(namaValue)}</td>
           <td>${rakLabel}</td>
@@ -1599,7 +1599,7 @@ async function loadStokSistem() {
               class="input-opname"
               id="fisik-${escapeHtml(skuValue)}"
               oninput="hitungSelisih('${escapeHtml(skuValue)}')"
-              onkeydown="nextInput(event, ${index})"
+              onkeydown="handleOpnameInputKey(event, '${escapeHtml(skuValue)}')"
               placeholder="Qty fisik"
               min="0"
             />
@@ -1624,6 +1624,50 @@ function nextInput(event, index) {
   if (event.key !== 'Enter') return;
   const inputs = document.querySelectorAll('.input-opname');
   inputs[index + 1]?.focus();
+}
+
+function hideAllOpnameRows() {
+  document.querySelectorAll('#opnameBody tr').forEach(row => {
+    row.style.display = 'none';
+    row.classList.remove('active-opname-row');
+  });
+}
+
+function showOpnameRow(row) {
+  hideAllOpnameRows();
+  row.dataset.visible = 'true';
+  row.style.display = '';
+  row.classList.add('active-opname-row');
+}
+
+function handleOpnameInputKey(event, sku) {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+  saveScannedOpnameRow(sku);
+}
+
+function saveScannedOpnameRow(sku) {
+  const input = document.getElementById(`fisik-${sku}`);
+  if (!input) return;
+
+  if (input.value === '') {
+    showToast('Isi stok fisik sebelum menyimpan.', false);
+    input.focus();
+    return;
+  }
+
+  hitungSelisih(sku);
+
+  const row = document.getElementById(`row-${sku}`);
+  if (row) {
+    row.dataset.visible = 'false';
+    row.style.display = 'none';
+    row.classList.remove('active-opname-row');
+  }
+
+  document.getElementById('scanOpnameResult').value = '';
+  document.getElementById('scanOpnameStatus').textContent = `Mode scan: ${opnameScannerMode}`;
+  showToast(`Data ${sku} disimpan. Lanjut scan berikutnya.`);
 }
 
 function hitungSelisih(sku) {
@@ -1683,6 +1727,11 @@ function filterOpname() {
   document.querySelector(`#opnameCategoryTabs button[onclick*="'${category}'"]`)?.classList.add('active-mini-tab');
 
   document.querySelectorAll('#opnameBody tr').forEach(row => {
+    if (row.dataset.visible !== 'true') {
+      row.style.display = 'none';
+      return;
+    }
+
     const matchText = row.textContent.toLowerCase().includes(keyword);
     const matchCategory = category === 'all' || row.dataset.category === category;
     row.style.display = matchText && matchCategory ? '' : 'none';
@@ -1960,14 +2009,14 @@ function applyScannedOpname(barcode) {
     const rakBarcode = row.dataset.rakBarcode || '';
 
     if (opnameScannerMode === 'rak' && rakBarcode && rakBarcode === normalized) {
-      row.style.background = 'rgba(80, 192, 255, 0.12)';
+      showOpnameRow(row);
       found = true;
     }
 
     if (opnameScannerMode === 'barang' && (sku === normalized || nama.toLowerCase().includes(normalized.toLowerCase()))) {
+      showOpnameRow(row);
       const input = row.querySelector('.input-opname');
       input?.focus();
-      row.style.background = 'rgba(130, 221, 110, 0.14)';
       found = true;
     }
   });

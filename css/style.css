@@ -322,6 +322,16 @@ button:hover {
   color: #edf2ff;
 }
 
+#opnameInput .opname-tools,
+#opnameInput .mini-tab-strip {
+  display: none;
+}
+
+.active-opname-row {
+  transition: background 0.2s ease;
+  background: rgba(130, 221, 110, 0.12);
+}
+
 .opname-tools input,
 .opname-tools select,
 .print-meta-grid input,
