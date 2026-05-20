@@ -240,6 +240,13 @@ async function fetchJson(url, options) {
     throw new Error(data?.error || `HTTP ${response.status}`);
   }
 
+  if (data && typeof data === 'object' && data.hasOwnProperty('success')) {
+    if (data.hasOwnProperty('data') && data.data !== undefined) {
+      return data.data;
+    }
+    return data;
+  }
+
   return data;
 }
 
@@ -1441,64 +1448,91 @@ function getOpnameCategoryLabel(category) {
   return labels[category] || "Lain-lain";
 }
 
+let opnameScanner = null;
+let opnameScannerMode = 'barang';
+
+function getOpnameOutletId() {
+  const outletSelect = document.getElementById('opnameOutletSelect');
+  const raw = outletSelect?.value;
+  return raw ? Number(raw) : undefined;
+}
+
+function getOpnameRange() {
+  const bulan = document.getElementById('opnameBulan')?.value || getBulan();
+  const tahun = document.getElementById('opnameTahun')?.value || getTahun();
+  const month = String(bulan).padStart(2, '0');
+  const startDate = `${tahun}-${month}-01`;
+  const endDate = `${tahun}-${month}-${new Date(Number(tahun), Number(bulan), 0).getDate()}`;
+  return { bulan, tahun, startDate, endDate };
+}
+
 async function loadStokSistem() {
   showLoader();
   try {
+    const { bulan, tahun } = getOpnameRange();
     const qs = new URLSearchParams({
-      bulan: document.getElementById("opnameBulan")?.value || getBulan(),
-      tahun: document.getElementById("opnameTahun")?.value || getTahun()
+      bulan,
+      tahun
     });
 
     const sku = getSelectedSku();
-    if (sku) qs.set("sku", sku);
+    if (sku) qs.set('sku', sku);
 
     state.opname = toArray(await fetchJson(`/api/stok-sistem?${qs.toString()}`));
-    const body = document.getElementById("opnameBody");
-    body.innerHTML = "";
+    const body = document.getElementById('opnameBody');
+    body.innerHTML = '';
 
     state.opname.forEach((item, index) => {
-      const category = getOpnameCategory(item.nama_produk);
+      const skuValue = item.sku || item.kode_barang || '';
+      const namaValue = item.nama_barang || item.nama_produk || '-';
+      const category = getOpnameCategory(namaValue);
+      const rakLabel = item.rak_code ? escapeHtml(item.rak_code) : '-';
+      const stokLabel = item.stok_sistem ?? item.qty_stok ?? item.stok ?? 0;
+
       body.innerHTML += `
-        <tr id="row-${escapeHtml(item.sku)}" data-category="${category}">
-          <td>${escapeHtml(item.sku)}</td>
-          <td>${escapeHtml(item.nama_produk)}</td>
+        <tr id="row-${escapeHtml(skuValue)}" data-category="${category}" data-rak-barcode="${escapeHtml(item.rak_barcode || '')}">
+          <td>${escapeHtml(skuValue)}</td>
+          <td>${escapeHtml(namaValue)}</td>
+          <td>${rakLabel}</td>
           <td><span class="status-badge status-safe">${getOpnameCategoryLabel(category)}</span></td>
-          <td id="sys-${escapeHtml(item.sku)}">${formatNumber(item.stok)}</td>
+          <td id="sys-${escapeHtml(skuValue)}">${formatNumber(stokLabel)}</td>
           <td>
             <input
               type="number"
               class="input-opname"
-              id="fisik-${escapeHtml(item.sku)}"
-              oninput="hitungSelisih('${escapeHtml(item.sku)}')"
+              id="fisik-${escapeHtml(skuValue)}"
+              oninput="hitungSelisih('${escapeHtml(skuValue)}')"
               onkeydown="nextInput(event, ${index})"
+              placeholder="Qty fisik"
+              min="0"
             />
           </td>
-          <td id="selisih-${escapeHtml(item.sku)}">0</td>
+          <td id="selisih-${escapeHtml(skuValue)}">0</td>
         </tr>
       `;
     });
 
-    setText("sum_total", formatNumber(state.opname.length));
+    setText('sum_total', formatNumber(state.opname.length));
     updateSummary();
     filterOpname();
   } catch (error) {
-    console.error("Stok sistem error:", error);
-    showToast(error.message || "Gagal memuat stok sistem", false);
+    console.error('Stok sistem error:', error);
+    showToast(error.message || 'Gagal memuat stok sistem', false);
   } finally {
     hideLoader();
   }
 }
 
 function nextInput(event, index) {
-  if (event.key !== "Enter") return;
-  const inputs = document.querySelectorAll(".input-opname");
+  if (event.key !== 'Enter') return;
+  const inputs = document.querySelectorAll('.input-opname');
   inputs[index + 1]?.focus();
 }
 
 function hitungSelisih(sku) {
-  const sistem = Number((document.getElementById(`sys-${sku}`)?.textContent || "0").replace(/\./g, "").replace(/,/g, ""));
+  const sistem = Number((document.getElementById(`sys-${sku}`)?.textContent || '0').replace(/\./g, '').replace(/,/g, ''));
   const input = document.getElementById(`fisik-${sku}`);
-  const fisik = input?.value === "" ? sistem : Number(input?.value || 0);
+  const fisik = input?.value === '' ? sistem : Number(input?.value || 0);
   const selisih = fisik - sistem;
 
   const selisihEl = document.getElementById(`selisih-${sku}`);
@@ -1506,12 +1540,12 @@ function hitungSelisih(sku) {
 
   if (selisihEl) {
     selisihEl.textContent = formatNumber(selisih);
-    selisihEl.classList.remove("selisih-plus", "selisih-minus");
-    if (selisih > 0) selisihEl.classList.add("selisih-plus");
-    if (selisih < 0) selisihEl.classList.add("selisih-minus");
+    selisihEl.classList.remove('selisih-plus', 'selisih-minus');
+    if (selisih > 0) selisihEl.classList.add('selisih-plus');
+    if (selisih < 0) selisihEl.classList.add('selisih-minus');
   }
 
-  row?.classList.toggle("row-problem", selisih !== 0);
+  row?.classList.toggle('row-problem', selisih !== 0);
   updateSummary();
 }
 
@@ -1521,11 +1555,11 @@ function updateSummary() {
   let totalSelisih = 0;
   let problem = 0;
 
-  document.querySelectorAll("#opnameBody tr").forEach(row => {
-    const sku = row.id.replace("row-", "");
-    const sistem = Number((document.getElementById(`sys-${sku}`)?.textContent || "0").replace(/\./g, "").replace(/,/g, ""));
+  document.querySelectorAll('#opnameBody tr').forEach(row => {
+    const sku = row.id.replace('row-', '');
+    const sistem = Number((document.getElementById(`sys-${sku}`)?.textContent || '0').replace(/\./g, '').replace(/,/g, ''));
     const input = document.getElementById(`fisik-${sku}`);
-    const fisik = input?.value === "" ? sistem : Number(input?.value || 0);
+    const fisik = input?.value === '' ? sistem : Number(input?.value || 0);
     const selisih = fisik - sistem;
 
     totalSistem += sistem;
@@ -1534,45 +1568,43 @@ function updateSummary() {
     if (selisih !== 0) problem += 1;
   });
 
-  setText("kpi_opname_total", formatNumber(document.querySelectorAll("#opnameBody tr").length));
-  setText("kpi_opname_sistem", formatNumber(totalSistem));
-  setText("kpi_opname_fisik", formatNumber(totalFisik));
-  setText("kpi_opname_selisih", formatNumber(totalSelisih));
-  setText("kpi_opname_problem", formatNumber(problem));
-  setText("sum_selisih", formatNumber(totalSelisih));
-  setText("sum_problem", formatNumber(problem));
+  setText('kpi_opname_total', formatNumber(document.querySelectorAll('#opnameBody tr').length));
+  setText('kpi_opname_sistem', formatNumber(totalSistem));
+  setText('kpi_opname_fisik', formatNumber(totalFisik));
+  setText('kpi_opname_selisih', formatNumber(totalSelisih));
+  setText('kpi_opname_problem', formatNumber(problem));
+  setText('sum_selisih', formatNumber(totalSelisih));
+  setText('sum_problem', formatNumber(problem));
 }
 
 function filterOpname() {
-  const keyword = (document.getElementById("searchOpname")?.value || "").toLowerCase();
-  const category = document.getElementById("opnameCategoryFilter")?.value || "all";
+  const keyword = (document.getElementById('searchOpname')?.value || '').toLowerCase();
+  const category = document.getElementById('opnameCategoryFilter')?.value || 'all';
 
-  document.querySelectorAll("#opnameCategoryTabs button")
-    .forEach(button => button.classList.remove("active-mini-tab"));
-  document.querySelector(`#opnameCategoryTabs button[onclick*="'${category}'"]`)?.classList.add("active-mini-tab");
+  document.querySelectorAll('#opnameCategoryTabs button')
+    .forEach(button => button.classList.remove('active-mini-tab'));
+  document.querySelector(`#opnameCategoryTabs button[onclick*="'${category}'"]`)?.classList.add('active-mini-tab');
 
-  document.querySelectorAll("#opnameBody tr").forEach(row => {
+  document.querySelectorAll('#opnameBody tr').forEach(row => {
     const matchText = row.textContent.toLowerCase().includes(keyword);
-    const matchCategory = category === "all" || row.dataset.category === category;
-    row.style.display = matchText && matchCategory ? "" : "none";
+    const matchCategory = category === 'all' || row.dataset.category === category;
+    row.style.display = matchText && matchCategory ? '' : 'none';
   });
 }
 
 function selectOpnameCategoryTab(event, category) {
-  const select = document.getElementById("opnameCategoryFilter");
+  const select = document.getElementById('opnameCategoryFilter');
   if (select) select.value = category;
   filterOpname();
 }
 
 async function loadHistory() {
   try {
-    const qs = new URLSearchParams({
-      bulan: document.getElementById("opnameBulan")?.value || getBulan(),
-      tahun: document.getElementById("opnameTahun")?.value || getTahun()
-    });
+    const { bulan, tahun } = getOpnameRange();
+    const qs = new URLSearchParams({ bulan, tahun });
     const data = toArray(await fetchJson(`/api/opname-history?${qs.toString()}`));
-    const body = document.getElementById("historyBody");
-    body.innerHTML = "";
+    const body = document.getElementById('historyBody');
+    body.innerHTML = '';
 
     data.forEach(item => {
       body.innerHTML += `
@@ -1588,90 +1620,98 @@ async function loadHistory() {
       body.innerHTML = `<tr><td colspan="3">Belum ada history opname pada periode ini.</td></tr>`;
     }
   } catch (error) {
-    console.error("History opname error:", error);
-    showToast(error.message || "Gagal memuat history opname", false);
+    console.error('History opname error:', error);
+    showToast(error.message || 'Gagal memuat history opname', false);
   }
 }
 
 async function simpanOpname() {
-  const bulan = document.getElementById("opnameBulan")?.value || getBulan();
-  const tahun = document.getElementById("opnameTahun")?.value || getTahun();
-  const tanggal = `${tahun}-${String(bulan).padStart(2, "0")}-01`;
-
-  const items = [...document.querySelectorAll("#opnameBody tr")].map(row => {
+  const { bulan, tahun, startDate } = getOpnameRange();
+  const items = [...document.querySelectorAll('#opnameBody tr')].map(row => {
     const sku = row.children[0].textContent.trim();
-    const sistem = Number((document.getElementById(`sys-${sku}`)?.textContent || "0").replace(/\./g, "").replace(/,/g, ""));
+    const sistem = Number((document.getElementById(`sys-${sku}`)?.textContent || '0').replace(/\./g, '').replace(/,/g, ''));
     const input = document.getElementById(`fisik-${sku}`);
-    const fisik = input?.value === "" ? sistem : Number(input?.value || 0);
+    const fisik = input?.value === '' ? sistem : Number(input?.value || 0);
     return { sku, sistem, fisik };
-  });
+  }).filter(item => item.sku);
+
+  if (!items.length) {
+    showToast('Tidak ada data opname untuk disimpan', false);
+    return;
+  }
 
   showLoader();
   try {
-    const data = await fetchJson("/api/simpan-opname", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tanggal, items })
+    const body = {
+      tanggal: startDate,
+      items
+    };
+
+    const data = await fetchJson('/api/simpan-opname', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
     });
 
-    showToast(data.message || "Opname berhasil disimpan");
+    showToast(data.message || 'Opname berhasil disimpan');
     await loadStokSistem();
     await loadHistory();
   } catch (error) {
-    console.error("Simpan opname error:", error);
-    showToast(error.message || "Gagal menyimpan opname", false);
+    console.error('Simpan opname error:', error);
+    showToast(error.message || 'Gagal menyimpan opname', false);
   } finally {
     hideLoader();
   }
 }
 
 function exportOpname() {
-  const rows = [...document.querySelectorAll("#opnameBody tr")].map(row => {
+  const rows = [...document.querySelectorAll('#opnameBody tr')].map(row => {
     const sku = row.children[0].textContent.trim();
-    const sistem = row.children[3].textContent.trim();
+    const kategori = row.children[3].textContent.trim();
+    const sistem = row.children[4].textContent.trim();
     const input = document.getElementById(`fisik-${sku}`);
-    const fisik = input?.value === "" ? sistem : input?.value || "0";
-    const selisih = Number(String(fisik).replace(/\./g, "").replace(/,/g, "")) - Number(String(sistem).replace(/\./g, "").replace(/,/g, ""));
-    return [sku, row.children[1].textContent.trim(), row.children[2].textContent.trim(), sistem, fisik, selisih];
+    const fisik = input?.value === '' ? sistem : input?.value || '0';
+    const selisih = Number(String(fisik).replace(/\./g, '').replace(/,/g, '')) - Number(String(sistem).replace(/\./g, '').replace(/,/g, ''));
+    return [sku, row.children[1].textContent.trim(), row.children[2].textContent.trim(), kategori, sistem, fisik, selisih];
   });
 
-  downloadCsv(`opname_${getTahun()}_${getBulan()}.csv`, ["sku", "nama_produk", "kategori", "stok_sistem", "stok_fisik", "selisih"], rows);
+  downloadCsv(`opname_${getTahun()}_${getBulan()}.csv`, ['sku', 'nama_produk', 'rak', 'kategori', 'stok_sistem', 'stok_fisik', 'selisih'], rows);
 }
 
 function downloadOpnameTemplate() {
-  const csv = "sku,stok_fisik\nSKU001,10\nSKU002,5";
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const csv = 'sku,stok_fisik\nSKU001,10\nSKU002,5';
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
+  const link = document.createElement('a');
   link.href = url;
-  link.download = "template_opname.csv";
+  link.download = 'template_opname.csv';
   link.click();
   URL.revokeObjectURL(url);
 }
 
 async function previewOpnameImport() {
-  const file = document.getElementById("opnameImportFile")?.files?.[0];
+  const file = document.getElementById('opnameImportFile')?.files?.[0];
   if (!file) {
-    showToast("Pilih file CSV opname terlebih dahulu", false);
+    showToast('Pilih file CSV opname terlebih dahulu', false);
     return;
   }
 
   const csv = await readFileAsText(file);
   const lines = csv.split(/\r?\n/).filter(Boolean);
-  const previewEl = document.getElementById("opnameImportPreview");
+  const previewEl = document.getElementById('opnameImportPreview');
 
   let html = `<div class="table-shell"><table class="table"><thead><tr>`;
-  lines[0].split(",").forEach(header => {
+  lines[0].split(',').forEach(header => {
     html += `<th>${escapeHtml(header.trim())}</th>`;
   });
   html += `</tr></thead><tbody>`;
 
   for (let index = 1; index < Math.min(lines.length, 6); index += 1) {
-    html += "<tr>";
-    lines[index].split(",").forEach(cell => {
+    html += '<tr>';
+    lines[index].split(',').forEach(cell => {
       html += `<td>${escapeHtml(cell.trim())}</td>`;
     });
-    html += "</tr>";
+    html += '</tr>';
   }
 
   html += `</tbody></table></div>
@@ -1684,14 +1724,14 @@ async function previewOpnameImport() {
 }
 
 async function importOpnameCSV() {
-  const previewEl = document.getElementById("opnameImportPreview");
+  const previewEl = document.getElementById('opnameImportPreview');
   const csv = previewEl?.dataset.csv;
   if (!csv) {
-    showToast("Preview file opname dulu sebelum import", false);
+    showToast('Preview file opname dulu sebelum import', false);
     return;
   }
 
-  if (!document.querySelectorAll("#opnameBody tr").length) {
+  if (!document.querySelectorAll('#opnameBody tr').length) {
     await loadStokSistem();
   }
 
@@ -1699,7 +1739,7 @@ async function importOpnameCSV() {
   let skipped = 0;
 
   csv.split(/\r?\n/).slice(1).filter(Boolean).forEach(line => {
-    const [skuRaw, stokFisikRaw] = line.split(",").map(item => item.trim());
+    const [skuRaw, stokFisikRaw] = line.split(',').map(item => item.trim());
     const input = document.getElementById(`fisik-${skuRaw}`);
     if (!skuRaw || !stokFisikRaw || !input) {
       skipped += 1;
@@ -1712,48 +1752,126 @@ async function importOpnameCSV() {
   });
 
   showToast(`Import opname selesai (${applied} diterapkan, ${skipped} dilewati)`, applied > 0);
-  showOpnameTab(null, "opnameInput");
-  document.querySelector(".tab-menu-opname button:nth-child(2)")?.classList.add("active-tab");
+  showOpnameTab(null, 'opnameInput');
+  document.querySelector('.tab-menu-opname button:nth-child(2)')?.classList.add('active-tab');
+}
+
+function startOpnameScanner() {
+  const scanContainer = document.getElementById('scannerPreview');
+  if (!scanContainer || !window.Html5Qrcode) {
+    showToast('Library scanner tidak tersedia', false);
+    return;
+  }
+
+  if (opnameScanner) {
+    opnameScanner.clear().catch(() => {});
+  }
+
+  opnameScanner = new Html5Qrcode('scannerPreview');
+  const config = { fps: 10, qrbox: { width: 280, height: 180 } };
+
+  opnameScanner.start(
+    { facingMode: 'environment' },
+    config,
+    qrCodeMessage => {
+      document.getElementById('scanOpnameResult').value = qrCodeMessage;
+      document.getElementById('scanOpnameStatus').textContent = `Mode scan: ${opnameScannerMode}`;
+      applyScannedOpname(qrCodeMessage);
+    },
+    errorMessage => {
+      console.debug('Scanner info:', errorMessage);
+    }
+  ).catch(error => {
+    console.error('Scanner gagal dimulai:', error);
+    showToast('Gagal mengaktifkan kamera scan', false);
+  });
+}
+
+function stopOpnameScanner() {
+  if (!opnameScanner) return;
+  opnameScanner.stop().then(() => {
+    opnameScanner.clear().catch(() => {});
+    opnameScanner = null;
+    document.getElementById('scanOpnameStatus').textContent = 'Scanner berhenti';
+  }).catch(error => {
+    console.error('Gagal stop scanner', error);
+  });
+}
+
+function setOpnameScannerMode(mode) {
+  opnameScannerMode = mode;
+  document.getElementById('scanOpnameStatus').textContent = `Mode scan: ${mode}`;
+}
+
+function applyScannedOpname(barcode) {
+  const rows = [...document.querySelectorAll('#opnameBody tr')];
+  const normalized = barcode.trim();
+  let found = false;
+
+  rows.forEach(row => {
+    const sku = row.children[0].textContent.trim();
+    const nama = row.children[1].textContent.trim();
+    const rakBarcode = row.dataset.rakBarcode || '';
+
+    if (opnameScannerMode === 'rak' && rakBarcode && rakBarcode === normalized) {
+      row.style.background = 'rgba(80, 192, 255, 0.12)';
+      found = true;
+    }
+
+    if (opnameScannerMode === 'barang' && (sku === normalized || nama.toLowerCase().includes(normalized.toLowerCase()))) {
+      const input = row.querySelector('.input-opname');
+      input?.focus();
+      row.style.background = 'rgba(130, 221, 110, 0.14)';
+      found = true;
+    }
+  });
+
+  if (!found) {
+    showToast('Barcode tidak ditemukan di daftar opname', false);
+  }
 }
 
 function printOpname() {
-  const checker = document.getElementById("opnameChecker")?.value?.trim() || "................................";
-  const gudang = document.getElementById("opnameGudang")?.value?.trim() || "................................";
-  const category = document.getElementById("opnamePrintCategory")?.value || "all";
-  const rows = [...document.querySelectorAll("#opnameBody tr")].filter(row => category === "all" || row.dataset.category === category);
+  const checker = document.getElementById('opnameChecker')?.value?.trim() || '................................';
+  const gudang = document.getElementById('opnameGudang')?.value?.trim() || '................................';
+  const category = document.getElementById('opnamePrintCategory')?.value || 'all';
+  const rows = [...document.querySelectorAll('#opnameBody tr')].filter(row => category === 'all' || row.dataset.category === category);
 
   if (!rows.length) {
-    showToast("Tidak ada data opname untuk kategori yang dipilih", false);
+    showToast('Tidak ada data opname untuk kategori yang dipilih', false);
     return;
   }
 
   const tableRows = rows.map((row, index) => {
     const sku = row.children[0].textContent.trim();
-    const sistem = row.children[3].textContent.trim();
+    const sistem = row.children[4].textContent.trim();
+    const fisik = document.getElementById(`fisik-${sku}`)?.value || '';
+    const selisih = row.children[6].textContent.trim();
 
     return [
       index + 1,
       sku,
       row.children[1].textContent.trim(),
       row.children[2].textContent.trim(),
+      row.children[3].textContent.trim(),
       sistem,
-      "",
-      ""
+      fisik,
+      selisih
     ];
   });
 
-  const title = `Form Stok Opname Gudang - ${getBulanLabel(document.getElementById("opnameBulan")?.value)} ${document.getElementById("opnameTahun")?.value}`;
+  const title = `Form Stok Opname Gudang - ${getBulanLabel(document.getElementById('opnameBulan')?.value)} ${document.getElementById('opnameTahun')?.value}`;
   const summary = [
-    ["Checker", checker],
-    ["Gudang / Lokasi", gudang],
-    ["Tanggal Cetak", formatDate(new Date())]
+    ['Checker', checker],
+    ['Gudang / Lokasi', gudang],
+    ['Tanggal Cetak', formatDate(new Date())]
   ];
 
   openPrintWindow({
     title,
-    subtitle: `Periode ${getBulanLabel(document.getElementById("opnameBulan")?.value)} ${document.getElementById("opnameTahun")?.value}`,
+    subtitle: `Periode ${getBulanLabel(document.getElementById('opnameBulan')?.value)} ${document.getElementById('opnameTahun')?.value}`,
     summary,
-    headers: ["No", "SKU", "Nama Produk", "Kategori", "Stok Sistem", "Stok Fisik", "Selisih"],
+    headers: ['No', 'SKU', 'Nama Produk', 'Rak', 'Kategori', 'Stok Sistem', 'Stok Fisik', 'Selisih'],
     rows: tableRows
   });
 }

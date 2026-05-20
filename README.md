@@ -1,52 +1,187 @@
-# Inventory App
+# 📦 CV EPIC Warehouse - Sistem Inventory Terintegrasi
 
-Aplikasi dashboard inventory berbasis web untuk mengelola penjualan, pembelian, stok, dan opname.
+Sistem manajemen inventory warehouse modern dengan fitur barcode scanning, stock opname, dan multi-user access control.
 
-## Fitur
+---
 
-- **Dashboard Penjualan**: KPI, grafik, input manual, import CSV
-- **Audit Stok**: Log transaksi penjualan dan pembelian
-- **Persediaan**: Laporan stok produk
-- **Forecasting**: Prediksi penjualan berdasarkan rata-rata
-- **Stok Opname**: Input fisik, history, import/export
+## 🎯 Fitur Utama
 
-## Setup
+### 1. **Dashboard Khusus Stok Opname**
+- Total stok barang realtime
+- Total item di warehouse
+- Status rak (penuh/normal/warning)
+- Barang di bawah minimum stok
+- Barang paling cepat keluar
+- Histori transaksi terbaru
+- Grafik aktivitas stok 7 hari
+- Notifikasi alerts
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+### 2. **Sistem Rak Gudang**
+- Management rak dengan kode unik
+- Barcode rak otomatis (CODE128)
+- Tracking kapasitas rak realtime
+- Warning jika rak penuh
+- Lokasi barang per rak
 
-2. Setup database PostgreSQL (gunakan Neon atau lokal):
-   - Buat database
-   - Update DATABASE_URL di .env
+### 3. **Sistem Barcode**
+- Generator barcode otomatis (CODE128 + QR Code)
+- Scan barcode dengan kamera HP
+- Preview & download barcode
+- Print barcode massal
+- Label size support
 
-3. Inisialisasi database:
-   ```bash
-   npm run init-db
-   ```
+### 4. **Stock Opname**
+- Scan barcode rak → stok sistem otomatis
+- Input stok fisik
+- Calculate selisih otomatis
+- Analisis penyebab selisih
+- Approval workflow
+- Adjustment stok otomatis
+- History & audit trail lengkap
 
-4. Jalankan server:
-   ```bash
-   npm start
-   ```
+### 5. **Multi-User dengan Role**
+- Admin (full access)
+- Staff Gudang (transaksi, scan)
+- Checker Opname (opname only)
+- Outlet assignment per user
+- Permission-based access control
 
-5. Buka http://localhost:3000
+### 6. **Dashboard & Reporting**
+- KPI cards realtime
+- Grafik aktivitas stok
+- Export Excel/PDF
+- Laporan transaksi
+- Laporan opname detail
 
-## API Endpoints
+### 7. **Dark Mode & Responsive**
+- Modern dark mode premium
+- Mobile-first responsive design
+- Smooth animations
+- TailwindCSS framework
 
-- GET /api/kpi?bulan=X&tahun=Y
-- GET /api/chart?tahun=Y
-- POST /api/add-penjualan
-- POST /api/add-pembelian
-- POST /api/add-stok_awal
-- POST /api/add-outlet
-- GET /api/persediaan
-- GET /api/audit
-- GET /api/forecast
-- Dan lainnya...
+---
 
-## Teknologi
+## 🏗️ Struktur Teknologi
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | HTML5, TailwindCSS, JavaScript (Vanilla) |
+| **Backend** | Flask Python, SQLAlchemy ORM |
+| **Database** | MySQL 5.7+ dengan structured schema |
+| **Authentication** | JWT + Session Management |
+| **API** | RESTful dengan versioning (v1) |
+| **Barcode** | python-barcode (CODE128), qrcode |
+| **Export** | openpyxl (Excel), reportlab (PDF) |
+
+---
+
+## 🚀 Quick Start
+
+### 1. Setup Database
+
+```bash
+# Login MySQL
+mysql -u root -p
+
+# Create database
+CREATE DATABASE cv_epic_warehouse_mysql CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+# Exit dan run schema
+mysql -u root -p cv_epic_warehouse_mysql < database_schema_mysql_complete.sql
+```
+
+### 2. Setup Python Backend
+
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Copy environment file
+cp .env.example .env
+
+# Edit .env dengan database credentials Anda
+```
+
+### 3. Run Flask Server
+
+```bash
+# Activate venv
+source venv/bin/activate
+
+# Run development server
+python app.py
+
+# Server running at http://localhost:5000
+```
+
+### 4. Test Login
+
+```
+URL: http://localhost:5000
+Username: admin
+Password: admin123
+```
+
+---
+
+## 📚 Dokumentasi Lengkap
+
+- **[DATABASE_MIGRATION_GUIDE.md](DATABASE_MIGRATION_GUIDE.md)** - Setup database dari PostgreSQL ke MySQL
+- **[INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md)** - Panduan lengkap setup & deployment
+- **[database_schema_mysql_complete.sql](database_schema_mysql_complete.sql)** - SQL schema lengkap
+
+---
+
+## 📂 Project Structure
+
+```
+inventory_app/
+├── app.py                                # Main Flask app
+├── config.py                             # Configuration
+├── requirements.txt                      # Python dependencies
+├── .env.example                          # Environment template
+│
+├── flask_app/                            # Flask application
+│   ├── models/                           # SQLAlchemy models
+│   ├── blueprints/                       # API endpoints
+│   │   ├── auth.py, produk.py, rak.py, stok.py
+│   │   ├── opname.py, barcode.py, scan.py
+│   │   ├── dashboard.py, report.py
+│   ├── utils/                            # Utilities
+│   │   ├── auth.py, barcode.py, helpers.py
+│   └── services/                         # Business logic
+│
+├── static/
+│   ├── barcodes/                         # Generated barcodes
+│   ├── uploads/                          # File uploads
+│   ├── reports/                          # Generated reports
+│   └── css/, js/                         # Frontend assets
+│
+├── index.html                            # Main page
+└── database_schema_mysql_complete.sql   # Full SQL schema
+```
+
+---
+
+## 🔐 Authentication
+
+### Roles & Permissions
+
+| Role | Login | Scan | Mutasi | Opname | Approve | Admin |
+|------|-------|------|--------|--------|---------|-------|
+| **Admin** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| **Staff Gudang** | ✓ | ✓ | ✓ | - | - | - |
+| **Checker Opname** | ✓ | ✓ | - | ✓ | - | - |
+
+---
+
+## 📊 Teknologi
 
 - Frontend: HTML, CSS, JavaScript, Chart.js
 - Backend: Node.js, Express

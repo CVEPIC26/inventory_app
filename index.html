@@ -735,6 +735,28 @@
             </div>
           </div>
 
+          <div class="scanner-panel">
+            <div class="scanner-panel-header">
+              <div>
+                <p class="section-eyebrow">Scanner & Audit</p>
+                <h4>Scan Rak / Barang</h4>
+              </div>
+              <div class="scanner-actions">
+                <select id="opnameScanMode" onchange="setOpnameScannerMode(this.value)">
+                  <option value="barang">Scan Barang</option>
+                  <option value="rak">Scan Rak</option>
+                </select>
+                <button type="button" class="btn-secondary" onclick="startOpnameScanner()">Mulai Scan</button>
+                <button type="button" class="btn-secondary" onclick="stopOpnameScanner()">Stop Scan</button>
+              </div>
+            </div>
+            <div class="scanner-summary">
+              <input type="text" id="scanOpnameResult" placeholder="Hasil scan barcode" readonly>
+              <span id="scanOpnameStatus">Mode scan: Barang</span>
+            </div>
+            <div id="scannerPreview" class="scanner-preview"></div>
+          </div>
+
           <div class="opname-summary">
             <div>Total Item: <b id="sum_total">0</b></div>
             <div>Selisih: <b id="sum_selisih">0</b></div>
@@ -754,6 +776,7 @@
                 <tr>
                   <th>SKU</th>
                   <th>Produk</th>
+                  <th>Rak</th>
                   <th>Kategori</th>
                   <th>Sistem</th>
                   <th>Fisik</th>
@@ -813,6 +836,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="/js/dashboard.js"></script>
   <script>

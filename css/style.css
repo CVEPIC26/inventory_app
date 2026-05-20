@@ -309,6 +309,132 @@ button:hover {
   margin: 18px 0 0;
 }
 
+.opname-header {
+  gap: 18px;
+}
+
+.opname-content {
+  background: rgba(18, 24, 34, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 28px 70px rgba(10, 14, 24, 0.22);
+  border-radius: 28px;
+  padding: 24px;
+  color: #edf2ff;
+}
+
+.opname-tools input,
+.opname-tools select,
+.print-meta-grid input,
+.print-meta-grid select,
+.opname-print-panel button,
+.scanner-summary input {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f7f9ff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.opname-tools input::placeholder,
+.print-meta-grid input::placeholder,
+.scanner-summary input::placeholder {
+  color: rgba(235, 241, 255, 0.64);
+}
+
+.opname-print-panel {
+  padding: 18px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.opname-summary {
+  justify-content: flex-start;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 22px;
+  padding: 18px;
+  margin-top: 18px;
+}
+
+.opname-summary div {
+  font-size: 0.96rem;
+  color: #e6ebff;
+}
+
+.opname-summary b {
+  color: #ffffff;
+}
+
+.opname-table th,
+.opname-table td {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.opname-table thead tr {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.opname-table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.opname-table td {
+  color: #eef2ff;
+}
+
+.row-problem {
+  background: rgba(190, 53, 85, 0.12);
+}
+
+.status-badge.status-safe,
+.status-badge.status-warning,
+.status-badge.status-danger {
+  padding: 6px 10px;
+  font-size: 0.84rem;
+  border-radius: 999px;
+}
+
+.scanner-panel {
+  margin-top: 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 18px;
+}
+
+.scanner-panel-header,
+.scanner-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.scanner-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.scanner-summary input {
+  flex: 1;
+  min-width: 240px;
+  padding: 12px 14px;
+}
+
+.scanner-summary span {
+  color: rgba(235, 241, 255, 0.72);
+  font-size: 0.95rem;
+}
+
+.scanner-preview {
+  margin-top: 14px;
+  min-height: 280px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
 .mini-tab-strip {
   display: flex;
   gap: 10px;
