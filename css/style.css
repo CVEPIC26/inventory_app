@@ -1300,6 +1300,145 @@ button:hover {
   border: 1px solid rgba(181, 68, 68, 0.2);
 }
 
+.opname-help-text {
+  margin: 0 0 14px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.hasil-so-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.hasil-so-card {
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid #ffe2d4;
+  background: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.hasil-so-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-soft);
+}
+
+.hasil-so-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.hasil-so-card__meta {
+  margin: 0 0 4px;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.hasil-so-card__action {
+  margin: 10px 0 0;
+  font-weight: 700;
+  color: var(--primary-strong);
+}
+
+.hasil-so-card__stat {
+  margin: 10px 0 0;
+  font-size: 0.88rem;
+}
+
+.opname-pill.status-wait {
+  background: #fff3e0;
+  color: var(--warning);
+}
+
+.opname-pill.status-process {
+  background: #e8f1ff;
+  color: #2b5ea8;
+}
+
+.opname-pill.status-done {
+  background: rgba(34, 122, 90, 0.12);
+  color: var(--success);
+}
+
+.opname-locked-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 48px 24px;
+  border-radius: var(--radius-lg);
+  border: 1px dashed #ffc4ae;
+  background: linear-gradient(180deg, #fff9f4, #fff2ea);
+}
+
+.opname-locked-panel svg {
+  width: 40px;
+  height: 40px;
+  color: var(--muted);
+}
+
+.opname-active-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid #ffc4ae;
+  background: linear-gradient(135deg, #fff5ef, #ffe9dd);
+}
+
+.scanner-preview {
+  width: 100%;
+  min-height: 220px;
+  border-radius: var(--radius-md);
+  border: 1px solid #ffe2d4;
+  background: #1b1416;
+  overflow: hidden;
+}
+
+.scanner-preview video {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.scanner-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.scanner-actions button {
+  flex: 1;
+  min-width: 140px;
+}
+
+.barcode-panel--wide {
+  grid-column: 1 / -1;
+}
+
+.barcode-doc-preview {
+  max-height: 520px;
+  overflow: auto;
+}
+
+.opname-empty-state {
+  padding: 32px;
+  text-align: center;
+  color: var(--muted);
+  border-radius: var(--radius-md);
+  border: 1px dashed #eed8cc;
+  background: rgba(255, 255, 255, 0.6);
+}
+
 #toast {
   position: fixed;
   right: 24px;

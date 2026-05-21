@@ -4,7 +4,11 @@ export default async function handler(req, res) {
   const client = await pool.connect();
   let transactionStarted = false;
   try {
-    const { tanggal, items, checker, lokasi, keterangan } = req.body;
+    const { tanggal, items, checker, lokasi, keterangan, perintah_id } = req.body;
+
+    if (!perintah_id) {
+      return res.status(400).json({ error: "perintah_id wajib. Pilih perintah SO dari tab Hasil SO terlebih dahulu." });
+    }
 
     if (!tanggal || !Array.isArray(items)) {
       return res.status(400).json({ error: "Payload tidak valid" });
@@ -20,6 +24,20 @@ export default async function handler(req, res) {
 
     if (!normalizedItems.length) {
       return res.status(400).json({ error: "Tidak ada item opname yang valid" });
+    }
+
+    const perintahResult = await client.query(
+      `SELECT id, kode_so, status, opname_id FROM stok_opname_perintah WHERE id = $1`,
+      [Number(perintah_id)]
+    );
+
+    if (!perintahResult.rows.length) {
+      return res.status(404).json({ error: "Perintah SO tidak ditemukan" });
+    }
+
+    const perintah = perintahResult.rows[0];
+    if (perintah.status === "selesai" && perintah.opname_id) {
+      return res.status(400).json({ error: `Perintah ${perintah.kode_so} sudah selesai` });
     }
 
     const skuList = [...new Set(normalizedItems.map((item) => item.sku))];
@@ -40,12 +58,11 @@ export default async function handler(req, res) {
     await client.query("BEGIN");
     transactionStarted = true;
 
-    // 1) HEADER
     const header = await client.query(`
-      INSERT INTO stok_opname (tanggal, total_item, total_selisih, checker, lokasi, keterangan)
-      VALUES ($1, $2, 0, $3, $4, $5)
+      INSERT INTO stok_opname (tanggal, total_item, total_selisih, checker, lokasi, keterangan, perintah_id)
+      VALUES ($1, $2, 0, $3, $4, $5, $6)
       RETURNING id
-    `, [tanggal, normalizedItems.length, checker || null, lokasi || null, keterangan || null]);
+    `, [tanggal, normalizedItems.length, checker || null, lokasi || null, keterangan || null, perintah.id]);
 
     const opnameId = header.rows[0].id;
 
@@ -53,7 +70,6 @@ export default async function handler(req, res) {
     let totalSelisihNet = 0;
     let totalItemSelisih = 0;
 
-    // 2) DETAIL opname fisik saja, tanpa otomatis menyesuaikan stok.
     for (const it of normalizedItems) {
       const sku = it.sku;
       const sistem = it.sistem;
@@ -64,7 +80,6 @@ export default async function handler(req, res) {
       totalSelisihNet += selisih;
       if (selisih !== 0) totalItemSelisih += 1;
 
-      // simpan detail fisik opname
       await client.query(`
         INSERT INTO stok_opname_detail
         (opname_id, sku, stok_sistem, stok_fisik, selisih, input_at)
@@ -72,7 +87,6 @@ export default async function handler(req, res) {
       `, [opnameId, sku, sistem, fisik, selisih]);
     }
 
-    // update total selisih di header
     await client.query(`
       UPDATE stok_opname
       SET total_selisih = $1
@@ -100,10 +114,27 @@ export default async function handler(req, res) {
       `, [totalItemSelisih, totalSelisihNet, opnameId]);
     }
 
+    await client.query(`
+      UPDATE stok_opname_perintah
+      SET
+        status = 'selesai',
+        checker = COALESCE($2, checker),
+        lokasi = COALESCE($3, lokasi),
+        opname_id = $4,
+        completed_at = NOW(),
+        updated_at = NOW()
+      WHERE id = $1
+    `, [perintah.id, checker || null, lokasi || null, opnameId]);
+
     await client.query("COMMIT");
     transactionStarted = false;
 
-    res.json({ message: "Opname fisik tersimpan", opname_id: opnameId });
+    res.json({
+      message: `Hasil ${perintah.kode_so} berhasil disimpan`,
+      opname_id: opnameId,
+      perintah_id: perintah.id,
+      kode_so: perintah.kode_so
+    });
 
   } catch (err) {
     if (transactionStarted) {

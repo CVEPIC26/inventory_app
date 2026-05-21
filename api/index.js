@@ -11,6 +11,7 @@ import importPenjualanHandler from "../backend/import-penjualan.js";
 import importStokAwalHandler from "../backend/import-stok_awal.js";
 import kpiHandler from "../backend/kpi.js";
 import opnameHistoryHandler from "../backend/opname-history.js";
+import opnamePerintahHandler from "../backend/opname-perintah.js";
 import opnameExportHandler from "../backend/stok-opname-export.js";
 import outletStatusHandler from "../backend/outlet-status.js";
 import outletListHandler from "../backend/outlet-list.js";
@@ -40,6 +41,8 @@ const routes = {
   "GET /template-stok_awal": templateStokAwalHandler,
   "GET /stok-sistem": stokSistemHandler,
   "GET /opname-history": opnameHistoryHandler,
+  "GET /opname-perintah": opnamePerintahHandler,
+  "POST /opname-perintah": opnamePerintahHandler,
   "GET /opname-export": opnameExportHandler,
   "GET /persediaan": persediaanHandler,
   "GET /audit": auditHandler,

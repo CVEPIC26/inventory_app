@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 const SAFE_SCHEMA = path.resolve('./migration_neon_safe.sql');
+const PERINTAH_SCHEMA = path.resolve('./migration_opname_perintah.sql');
 const DEFAULT_SCHEMA = path.resolve('./schema.sql');
 
 async function initDB() {
@@ -26,6 +27,12 @@ async function initDB() {
       ALTER TABLE stok_opname ADD COLUMN IF NOT EXISTS lokasi VARCHAR(150);
       ALTER TABLE stok_opname_detail ADD COLUMN IF NOT EXISTS input_at TIMESTAMP DEFAULT NOW();
     `);
+
+    if (fs.existsSync(PERINTAH_SCHEMA)) {
+      const perintahSql = fs.readFileSync(PERINTAH_SCHEMA, 'utf8');
+      await pool.query(perintahSql);
+      console.log('Perintah SO schema applied.');
+    }
 
     console.log('Database initialized successfully! No existing data was deleted.');
   } catch (err) {

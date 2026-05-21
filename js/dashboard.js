@@ -30,8 +30,9 @@ const state = {
     notes: []
   },
   opname: [],
-  opnameScan: {}, // {sku: {nama, sistem, fisik, catatan}}
-  opnameExportSessions: []
+  opnameScan: {},
+  perintahList: [],
+  activePerintah: null
 };
 
 const pageMeta = {
@@ -512,7 +513,19 @@ function showOpnameTab(event, id) {
   activeButton?.classList.add("active-tab");
 
   if (id === "opnameHistory") loadHistory();
-  if (id === "opnameExport") loadExportSessions();
+  if (id === "opnamePerintah") {
+    initPerintahFormDefaults();
+    loadPerintahList();
+  }
+  if (id === "opnameHasil") {
+    loadPerintahList();
+    goBackHasilSoList();
+  }
+  if (id === "opnameInput") {
+    if (!guardOpnameScanTab()) {
+      showToast('Pilih perintah SO dari tab Hasil SO terlebih dahulu', false);
+    }
+  }
   if (id === "opnameBarcode") loadBarcodeGenerator();
   if (id === "opnameKPI") refreshOpnameMetrics();
   if (window.lucide) lucide.createIcons();
@@ -575,7 +588,9 @@ function selectMenu(event, menu) {
     showOpnameTab(null, "opnameKPI");
     document.querySelector(".tab-menu-opname button")?.classList.add("active-tab");
     syncOpnamePeriodToLocal();
-    loadStokSistem();
+    initPerintahFormDefaults();
+    loadPerintahList();
+    updateOpnameInputVisibility();
   }
 }
 
@@ -604,7 +619,9 @@ async function applyCurrentFilters() {
 
   if (currentMenu === "opname") {
     syncOpnamePeriodToLocal();
-    await loadStokSistem();
+    await loadPerintahList();
+    if (state.activePerintah?.id) await loadStokSistem();
+    updateOpnameInputVisibility();
   }
 }
 
@@ -1930,11 +1947,17 @@ async function exportOpnameHistory() {
 }
 
 async function simpanOpname() {
+  if (!state.activePerintah?.id) {
+    showToast('Pilih perintah SO dari tab Hasil SO terlebih dahulu', false);
+    showOpnameTab(null, 'opnameHasil');
+    return;
+  }
+
   const checker = document.getElementById('opnameChecker')?.value?.trim();
   const lokasi = document.getElementById('opnameGudang')?.value?.trim();
-  
+
   if (!checker) {
-    showToast('Isi nama PIC checker terlebih dahulu', false);
+    showToast('Isi nama PIC pelaksana terlebih dahulu', false);
     return;
   }
 
@@ -1961,7 +1984,9 @@ async function simpanOpname() {
       tanggal: startDate,
       checker,
       lokasi,
-      items
+      items,
+      perintah_id: state.activePerintah.id,
+      keterangan: state.activePerintah.keterangan || null
     };
 
     const data = await fetchJson('/api/simpan-opname', {
@@ -1971,10 +1996,15 @@ async function simpanOpname() {
     });
 
     showToast(data.message || 'Opname berhasil disimpan');
-    resetOpnameScanState();
+    stopOpnameScanner();
+    state.activePerintah = null;
+    state.opnameScan = {};
+    updateOpnameInputVisibility();
+    updateOpnameScanSummary();
     refreshOpnameMetrics();
+    await loadPerintahList();
     await loadHistory();
-    showOpnameTab(null, 'opnameHistory');
+    showOpnameTab(null, 'opnameHasil');
   } catch (error) {
     console.error('Simpan opname error:', error);
     showToast(error.message || 'Gagal menyimpan opname', false);
@@ -2115,6 +2145,12 @@ async function importOpnameCSV() {
 }
 
 async function applyManualOpnameScan() {
+  if (!state.activePerintah?.id) {
+    showToast('Pilih perintah SO dari tab Hasil SO terlebih dahulu', false);
+    showOpnameTab(null, 'opnameHasil');
+    return;
+  }
+
   const input = document.getElementById('manualOpnameScan');
   const sku = input?.value?.trim();
   if (!sku) {
@@ -2405,6 +2441,11 @@ function loadScannerLibrary() {
 }
 
 async function startOpnameScanner() {
+  if (!state.activePerintah?.id) {
+    showToast('Pilih perintah SO dari tab Hasil SO terlebih dahulu', false);
+    return;
+  }
+
   const scanContainer = document.getElementById('scannerPreview');
   if (!scanContainer) {
     showToast('Container scanner tidak ditemukan', false);
@@ -2432,8 +2473,8 @@ async function startOpnameScanner() {
     { facingMode: 'environment' },
     config,
     qrCodeMessage => {
-      document.getElementById('scanOpnameResult').value = qrCodeMessage;
-      document.getElementById('scanOpnameStatus').textContent = `Mode scan: ${opnameScannerMode}`;
+      const statusEl = document.getElementById('scanOpnameStatus');
+      if (statusEl) statusEl.textContent = 'Barcode terbaca';
       applyScannedOpname(qrCodeMessage);
     },
     errorMessage => {
@@ -2459,13 +2500,15 @@ function stopOpnameScanner() {
 function resetOpnameScanState() {
   stopOpnameScanner();
   state.opnameScan = {};
-  document.getElementById('manualOpnameScan').value = '';
-  document.getElementById('scanOpnameStatus').textContent = 'Siap scan';
+  const manualInput = document.getElementById('manualOpnameScan');
+  if (manualInput) manualInput.value = '';
+  const statusEl = document.getElementById('scanOpnameStatus');
+  if (statusEl) statusEl.textContent = 'Siap scan';
   const resultPanel = document.getElementById('opnameScanResult');
   if (resultPanel) resultPanel.style.display = 'none';
   updateOpnameScanSummary();
   refreshOpnameMetrics();
-  document.getElementById('manualOpnameScan')?.focus();
+  manualInput?.focus();
 }
 
 function setOpnameScannerMode(mode) {
@@ -2474,8 +2517,17 @@ function setOpnameScannerMode(mode) {
 }
 
 function applyScannedOpname(barcode) {
-  const rows = [...document.querySelectorAll('#opnameBody tr')];
   const normalized = barcode.trim();
+  if (!normalized) return;
+
+  const manualInput = document.getElementById('manualOpnameScan');
+  if (manualInput) {
+    manualInput.value = normalized;
+    applyManualOpnameScan();
+    return;
+  }
+
+  const rows = [...document.querySelectorAll('#opnameBody tr')];
   let found = false;
 
   rows.forEach(row => {
@@ -2491,15 +2543,14 @@ function applyScannedOpname(barcode) {
 
     if (opnameScannerMode === 'barang' && (sku === normalized || nama.toLowerCase().includes(normalized.toLowerCase()))) {
       showOpnameRow(row);
-      const input = row.querySelector('.input-opname');
-      input?.focus();
+      row.querySelector('.input-opname')?.focus();
       setText('opnameLastScanBadge', `Produk: ${sku}`);
       found = true;
     }
   });
 
   if (!found) {
-    showToast('Barcode tidak ditemukan di daftar opname', false);
+    showToast('Barcode tidak ditemukan', false);
   }
 }
 

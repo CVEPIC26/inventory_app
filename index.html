@@ -682,10 +682,11 @@
 
         <div class="subtab-menu tab-menu-opname">
           <button data-opname-tab="opnameKPI" onclick="showOpnameTab(event,'opnameKPI')" class="active-tab"><i data-lucide="layout-dashboard"></i><span>KPI</span></button>
-          <button data-opname-tab="opnameInput" onclick="showOpnameTab(event,'opnameInput')"><i data-lucide="scan-line"></i><span>Scan & Input</span></button>
+          <button data-opname-tab="opnamePerintah" onclick="showOpnameTab(event,'opnamePerintah')"><i data-lucide="clipboard-list"></i><span>Perintah SO</span></button>
+          <button data-opname-tab="opnameHasil" onclick="showOpnameTab(event,'opnameHasil')"><i data-lucide="folder-open"></i><span>Hasil SO</span></button>
+          <button data-opname-tab="opnameInput" onclick="showOpnameTab(event,'opnameInput')" id="opnameInputTabBtn"><i data-lucide="scan-line"></i><span>Scan & Input</span></button>
           <button data-opname-tab="opnameHistory" onclick="showOpnameTab(event,'opnameHistory')"><i data-lucide="history"></i><span>History</span></button>
           <button data-opname-tab="opnameImport" onclick="showOpnameTab(event,'opnameImport')"><i data-lucide="upload"></i><span>Import</span></button>
-          <button data-opname-tab="opnameExport" onclick="showOpnameTab(event,'opnameExport')"><i data-lucide="download"></i><span>Export</span></button>
           <button data-opname-tab="opnameBarcode" onclick="showOpnameTab(event,'opnameBarcode')"><i data-lucide="barcode"></i><span>Barcode</span></button>
         </div>
 
@@ -748,35 +749,145 @@
                 </div>
               </div>
               <div class="opname-quick-actions">
-                <button class="btn-primary" onclick="showOpnameTab(null,'opnameInput')"><i data-lucide="scan-line"></i><span>Mulai Scan</span></button>
-                <button class="btn-secondary" onclick="showOpnameTab(null,'opnameImport')"><i data-lucide="upload"></i><span>Import CSV</span></button>
+                <button class="btn-primary" onclick="showOpnameTab(null,'opnamePerintah')"><i data-lucide="clipboard-list"></i><span>Buat Perintah</span></button>
+                <button class="btn-secondary" onclick="showOpnameTab(null,'opnameHasil')"><i data-lucide="folder-open"></i><span>Hasil SO</span></button>
                 <button class="btn-secondary" onclick="showOpnameTab(null,'opnameBarcode')"><i data-lucide="barcode"></i><span>Barcode</span></button>
               </div>
             </div>
           </div>
         </div>
 
-        <div id="opnameInput" style="display:none;" class="opname-content">
-          <div class="opname-work-grid">
-            <div class="opname-panel scanner-panel">
+        <div id="opnamePerintah" class="opname-content" style="display:none;">
+          <div class="opname-panel">
+            <div class="opname-panel-heading">
+              <div>
+                <p class="section-eyebrow">SVP / Supervisor</p>
+                <h4>Buat Perintah Stok Opname</h4>
+              </div>
+            </div>
+            <p class="opname-help-text">Buat perintah SO terlebih dahulu. Setelah dibuat, file akan muncul di tab <strong>Hasil SO</strong> untuk dikerjakan pelaksana.</p>
+            <div class="print-meta-grid">
+              <label class="filter-control">
+                <span>Kode SO</span>
+                <input type="text" id="perintahKodeSo" placeholder="Contoh: SO001" maxlength="50">
+              </label>
+              <label class="filter-control">
+                <span>Tanggal Perintah</span>
+                <input type="date" id="perintahTanggal">
+              </label>
+              <label class="filter-control">
+                <span>Nama SVP</span>
+                <input type="text" id="perintahSvpNama" placeholder="Nama supervisor">
+              </label>
+              <label class="filter-control">
+                <span>Lokasi / Gudang</span>
+                <input type="text" id="perintahLokasi" placeholder="Gudang utama">
+              </label>
+            </div>
+            <label class="filter-control top-space">
+              <span>Keterangan</span>
+              <input type="text" id="perintahKeterangan" placeholder="Catatan perintah (opsional)">
+            </label>
+            <div class="section-actions top-space">
+              <button type="button" class="btn-primary" onclick="buatPerintahOpname()"><i data-lucide="plus-circle"></i><span>Buat Perintah SO</span></button>
+            </div>
+            <div id="perintahRecentList" class="top-space"></div>
+          </div>
+        </div>
+
+        <div id="opnameHasil" class="opname-content" style="display:none;">
+          <div id="opnameHasilList" style="display:block;">
+            <div class="opname-panel">
               <div class="opname-panel-heading">
                 <div>
-                  <p class="section-eyebrow">Input Mode</p>
-                  <h4>Scan & Input Qty Fisik</h4>
+                  <p class="section-eyebrow">Pelaksana</p>
+                  <h4>Daftar Perintah & Hasil SO</h4>
                 </div>
-                <span id="scanOpnameStatus" class="opname-pill">Siap scan</span>
               </div>
-              <div class="print-meta-grid">
-                <input type="text" id="opnameChecker" placeholder="Nama PIC checker" required>
-                <input type="text" id="opnameGudang" placeholder="Gudang / lokasi" required>
+              <p class="opname-help-text">Klik kartu SO untuk mulai scan (belum selesai) atau lihat hasil (sudah selesai).</p>
+              <div id="hasilSoList" class="hasil-so-grid"></div>
+            </div>
+          </div>
+          <div id="opnameHasilDetail" style="display:none;">
+            <button type="button" class="btn-secondary" onclick="goBackHasilSoList()" style="margin-bottom: 16px;"><i data-lucide="arrow-left"></i><span>Kembali</span></button>
+            <div class="opname-panel">
+              <div class="opname-panel-heading">
+                <div>
+                  <p class="section-eyebrow"><span id="hasilDetailKode">SO001</span></p>
+                  <h4>Detail Hasil Stok Opname</h4>
+                </div>
+                <span id="hasilDetailStatusBadge" class="opname-pill">-</span>
               </div>
-              <div class="manual-scan-row">
-                <input type="text" id="manualOpnameScan" placeholder="Scan / Ketik SKU atau barcode" autofocus onkeydown="if(event.key==='Enter'){event.preventDefault();applyManualOpnameScan();}">
-                <button type="button" class="btn-primary" onclick="applyManualOpnameScan()"><i data-lucide="search"></i><span>Cari</span></button>
+              <div class="print-meta-grid" style="margin-bottom: 16px;">
+                <div><label>Tanggal</label><p id="hasilDetailDate" style="font-weight:600;margin:0;">-</p></div>
+                <div><label>SVP</label><p id="hasilDetailSvp" style="font-weight:600;margin:0;">-</p></div>
+                <div><label>Pelaksana</label><p id="hasilDetailChecker" style="font-weight:600;margin:0;">-</p></div>
+                <div><label>Lokasi</label><p id="hasilDetailLokasi" style="font-weight:600;margin:0;">-</p></div>
               </div>
-              <div style="display: flex; gap: 8px; margin-top: 12px;">
-                <button onclick="simpanOpname()" class="btn-primary" style="flex:1"><i data-lucide="save"></i><span>Simpan & Selesai</span></button>
-                <button onclick="resetOpnameScanState()" class="btn-secondary" style="flex:1"><i data-lucide="refresh-cw"></i><span>Reset</span></button>
+              <div class="table-shell">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>SKU</th>
+                      <th>Produk</th>
+                      <th>Stok Sistem</th>
+                      <th>Stok Fisik</th>
+                      <th>Selisih</th>
+                    </tr>
+                  </thead>
+                  <tbody id="hasilDetailBody"></tbody>
+                </table>
+              </div>
+              <div class="section-actions top-space">
+                <button type="button" class="btn-primary" onclick="exportHasilSOcsv()"><i data-lucide="download"></i><span>Download CSV</span></button>
+                <button type="button" class="btn-secondary" id="hasilMulaiScanBtn" onclick="mulaiScanDariHasil()"><i data-lucide="scan-line"></i><span>Mulai / Lanjut Scan</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="opnameInput" style="display:none;" class="opname-content">
+          <div id="opnameInputLocked" class="opname-locked-panel">
+            <i data-lucide="lock"></i>
+            <h4>Scan belum aktif</h4>
+            <p>Pilih perintah SO dari tab <strong>Hasil SO</strong>, lalu klik kartu SO untuk membuka scan & input.</p>
+            <button type="button" class="btn-primary" onclick="showOpnameTab(null,'opnameHasil')"><i data-lucide="folder-open"></i><span>Buka Hasil SO</span></button>
+          </div>
+          <div id="opnameInputActive" style="display:none;">
+            <div class="opname-active-banner">
+              <div>
+                <p class="section-eyebrow">Perintah Aktif</p>
+                <h4 id="activeSoKode">-</h4>
+                <p id="activeSoMeta" class="opname-help-text" style="margin:0;"></p>
+              </div>
+              <button type="button" class="btn-secondary" onclick="clearActivePerintah()"><i data-lucide="x"></i><span>Tutup</span></button>
+            </div>
+            <div class="opname-work-grid top-space">
+              <div class="opname-panel scanner-panel">
+                <div class="opname-panel-heading">
+                  <div>
+                    <p class="section-eyebrow">Input Mode</p>
+                    <h4>Scan & Input Qty Fisik</h4>
+                  </div>
+                  <span id="scanOpnameStatus" class="opname-pill">Siap scan</span>
+                </div>
+                <div id="scannerPreview" class="scanner-preview"></div>
+                <div class="scanner-actions">
+                  <button type="button" class="btn-primary" onclick="startOpnameScanner()"><i data-lucide="camera"></i><span>Mulai Kamera</span></button>
+                  <button type="button" class="btn-secondary" onclick="stopOpnameScanner()"><i data-lucide="camera-off"></i><span>Stop Kamera</span></button>
+                </div>
+                <div class="print-meta-grid top-space">
+                  <input type="text" id="opnameChecker" placeholder="Nama PIC pelaksana" required>
+                  <input type="text" id="opnameGudang" placeholder="Gudang / lokasi" required>
+                </div>
+                <div class="manual-scan-row top-space">
+                  <input type="text" id="manualOpnameScan" placeholder="Scan / Ketik SKU atau barcode" onkeydown="if(event.key==='Enter'){event.preventDefault();applyManualOpnameScan();}">
+                  <button type="button" class="btn-primary" onclick="applyManualOpnameScan()"><i data-lucide="search"></i><span>Cari</span></button>
+                </div>
+                <div class="scanner-actions top-space">
+                  <button type="button" onclick="simpanOpname()" class="btn-primary" style="flex:1"><i data-lucide="save"></i><span>Simpan & Selesai</span></button>
+                  <button type="button" onclick="resetOpnameScanState()" class="btn-secondary" style="flex:1"><i data-lucide="refresh-cw"></i><span>Reset Scan</span></button>
+                </div>
               </div>
             </div>
           </div>
@@ -845,100 +956,42 @@
           </div>
         </div>
 
-        <div id="opnameExport" class="opname-content" style="display:none;">
-          <div id="opnameExportList" style="display:block;">
-            <div class="opname-panel">
-              <div class="opname-panel-heading">
-                <div>
-                  <p class="section-eyebrow">Completed Sessions</p>
-                  <h4>Daftar SO Selesai</h4>
-                </div>
-              </div>
-              <div id="exportSessionList" style="display: grid; gap: 12px;">
-                <!-- Populated by loadExportSessions() -->
-              </div>
-            </div>
-          </div>
-          <div id="opnameExportDetail" style="display:none;">
-            <button class="btn-secondary" onclick="goBackExportList()" style="margin-bottom: 16px;"><i data-lucide="arrow-left"></i><span>Kembali</span></button>
-            <div class="opname-panel">
-              <div class="opname-panel-heading">
-                <div>
-                  <p class="section-eyebrow"><span id="exportDetailCode">SO001</span></p>
-                  <h4>Detail Stok Opname</h4>
-                </div>
-              </div>
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px;">
-                <div>
-                  <label>Tanggal</label>
-                  <p id="exportDetailDate" style="font-weight: 600;">-</p>
-                </div>
-                <div>
-                  <label>PIC</label>
-                  <p id="exportDetailPic" style="font-weight: 600;">-</p>
-                </div>
-                <div>
-                  <label>Lokasi</label>
-                  <p id="exportDetailLokasi" style="font-weight: 600;">-</p>
-                </div>
-                <div>
-                  <label>Status</label>
-                  <p id="exportDetailStatus" style="font-weight: 600;">-</p>
-                </div>
-              </div>
-              <div class="table-shell">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>SKU</th>
-                      <th>Produk</th>
-                      <th>Stok Sistem</th>
-                      <th>Stok Fisik</th>
-                      <th>Selisih</th>
-                    </tr>
-                  </thead>
-                  <tbody id="exportDetailBody"></tbody>
-                </table>
-              </div>
-              <div style="margin-top: 16px;">
-                <button class="btn-primary" onclick="exportSOcsv()" style="width: 100%;"><i data-lucide="download"></i><span>Download CSV</span></button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div id="opnameBarcode" class="opname-content" style="display:none;">
           <div class="barcode-generator-grid">
+            <div class="barcode-panel barcode-panel--wide">
+              <h4>Barcode Semua Produk</h4>
+              <p>Generate barcode untuk seluruh produk. Unduh dokumen Word (A5, 3 kolom × 10 baris). Ukuran label: 5 cm × 2 cm — nama produk di atas, kode SKU di bawah barcode.</p>
+              <div class="section-actions top-space">
+                <button type="button" class="btn-primary" onclick="downloadAllBarcodeDoc()"><i data-lucide="file-down"></i><span>Download DOC Semua Produk</span></button>
+                <button type="button" class="btn-secondary" onclick="previewAllBarcodeDoc()"><i data-lucide="eye"></i><span>Preview</span></button>
+              </div>
+              <div id="barcodeDocPreview" class="barcode-doc-preview top-space"></div>
+            </div>
             <div class="barcode-panel">
-              <h4>Barcode Produk</h4>
-              <p>Pilih produk untuk membuat barcode produk yang siap dicetak atau diunduh.</p>
+              <h4>Barcode Satuan</h4>
+              <p>Preview barcode satu produk atau rak.</p>
               <label class="filter-control">
                 <span>Produk</span>
                 <input type="text" id="barcodeProductInput" list="produkList" placeholder="Ketik SKU / nama produk">
               </label>
               <div class="section-actions top-space">
-                <button class="btn-primary" onclick="renderProductBarcode()">Generate Barcode Produk</button>
-                <button class="btn-secondary" onclick="downloadBarcodeSvg('productBarcodeSvg','produk')">Download SVG</button>
+                <button type="button" class="btn-primary" onclick="renderProductBarcode()">Generate Produk</button>
+                <button type="button" class="btn-secondary" onclick="downloadBarcodeSvg('productBarcodeSvg','produk')">Download SVG</button>
               </div>
               <div class="barcode-output top-space">
-                <p><strong>Barcode Value:</strong> <span id="productBarcodeValue">-</span></p>
+                <p><strong>Nilai:</strong> <span id="productBarcodeValue">-</span></p>
                 <svg id="productBarcodeSvg" xmlns="http://www.w3.org/2000/svg"></svg>
               </div>
-            </div>
-
-            <div class="barcode-panel">
-              <h4>Barcode Rak</h4>
-              <p>Masukkan kode rak untuk membuat barcode rak yang bisa diunduh langsung.</p>
-              <label class="filter-control">
+              <label class="filter-control top-space">
                 <span>Kode Rak</span>
-                <input type="text" id="barcodeRackInput" placeholder="Masukkan kode rak">
+                <input type="text" id="barcodeRackInput" placeholder="Kode rak">
               </label>
               <div class="section-actions top-space">
-                <button class="btn-primary" onclick="renderRackBarcode()">Generate Barcode Rak</button>
-                <button class="btn-secondary" onclick="downloadBarcodeSvg('rackBarcodeSvg','rak')">Download SVG</button>
+                <button type="button" class="btn-primary" onclick="renderRackBarcode()">Generate Rak</button>
+                <button type="button" class="btn-secondary" onclick="downloadBarcodeSvg('rackBarcodeSvg','rak')">Download SVG Rak</button>
               </div>
               <div class="barcode-output top-space">
-                <p><strong>Barcode Value:</strong> <span id="rackBarcodeValue">-</span></p>
+                <p><strong>Nilai:</strong> <span id="rackBarcodeValue">-</span></p>
                 <svg id="rackBarcodeSvg" xmlns="http://www.w3.org/2000/svg"></svg>
               </div>
             </div>
@@ -995,8 +1048,8 @@
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-  <script src="/js/dashboard.js?v=opname-modal-20260521"></script>
-  <script src="/js/dashboard-opname-export.js?v=opname-20260521"></script>
+  <script src="/js/dashboard.js?v=opname-so-20260521b"></script>
+  <script src="/js/dashboard-opname-perintah.js?v=opname-so-20260521b"></script>
   <script>
     lucide.createIcons();
   </script>

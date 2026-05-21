@@ -70,6 +70,26 @@ CREATE TABLE IF NOT EXISTS stok_opname_detail (
   input_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS stok_opname_perintah (
+  id SERIAL PRIMARY KEY,
+  kode_so VARCHAR(50) NOT NULL UNIQUE,
+  tanggal_perintah DATE NOT NULL,
+  bulan INTEGER NOT NULL,
+  tahun INTEGER NOT NULL,
+  svp_nama VARCHAR(150) NOT NULL,
+  lokasi VARCHAR(150),
+  keterangan TEXT,
+  status VARCHAR(30) NOT NULL DEFAULT 'menunggu',
+  checker VARCHAR(150),
+  opname_id INTEGER REFERENCES stok_opname(id) ON DELETE SET NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  started_at TIMESTAMP,
+  completed_at TIMESTAMP
+);
+
+ALTER TABLE stok_opname ADD COLUMN IF NOT EXISTS perintah_id INTEGER REFERENCES stok_opname_perintah(id) ON DELETE SET NULL;
+
 -- Audit outlet tables
 CREATE TABLE IF NOT EXISTS outlet_stok_awal (
   id SERIAL PRIMARY KEY,
@@ -162,6 +182,8 @@ CREATE INDEX IF NOT EXISTS idx_pembelian_tanggal_sku ON pembelian (tanggal, sku)
 CREATE INDEX IF NOT EXISTS idx_penyesuaian_tanggal_sku ON stok_penyesuaian (tanggal, sku);
 CREATE INDEX IF NOT EXISTS idx_stok_opname_tanggal ON stok_opname (tanggal DESC);
 CREATE INDEX IF NOT EXISTS idx_stok_opname_detail_opname ON stok_opname_detail (opname_id, sku);
+CREATE INDEX IF NOT EXISTS idx_stok_opname_perintah_periode ON stok_opname_perintah (tahun, bulan, tanggal_perintah DESC);
+CREATE INDEX IF NOT EXISTS idx_stok_opname_perintah_kode ON stok_opname_perintah (kode_so);
 CREATE INDEX IF NOT EXISTS idx_outlet_stok_masuk_tanggal ON outlet_stok_masuk (tanggal, outlet_id, sku);
 CREATE INDEX IF NOT EXISTS idx_outlet_penjualan_tanggal ON outlet_penjualan (tanggal, outlet_id, sku);
 CREATE INDEX IF NOT EXISTS idx_outlet_penyesuaian_tanggal ON outlet_stok_penyesuaian (tanggal, outlet_id, sku);
