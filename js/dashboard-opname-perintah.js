@@ -312,19 +312,23 @@ function guardOpnameScanTab() {
 
 // --- Barcode bulk DOC (A5, 3 kolom x 10 baris, label 5cm x 2cm) ---
 
-function buildBarcodeSvgString(value) {
+function buildBarcodeImgDataUrl(value) {
   if (!window.JsBarcode) return '';
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+
+  const canvas = document.createElement('canvas');
   try {
-    JsBarcode(svg, String(value), {
+    JsBarcode(canvas, String(value), {
       format: 'CODE128',
       displayValue: false,
-      width: 1.1,
-      height: 28,
-      margin: 0
+      width: 2,
+      height: 55,
+      margin: 4,
+      background: '#ffffff',
+      lineColor: '#000000'
     });
-    return new XMLSerializer().serializeToString(svg);
-  } catch {
+    return canvas.toDataURL('image/png');
+  } catch (error) {
+    console.warn('Barcode generate failed:', value, error);
     return '';
   }
 }
@@ -345,11 +349,14 @@ function buildBarcodeDocHtml(produkList) {
         cells.push('<td class="label-cell label-cell--empty"></td>');
         continue;
       }
-      const svg = buildBarcodeSvgString(p.sku);
+      const imgSrc = buildBarcodeImgDataUrl(p.sku);
+      const barcodeHtml = imgSrc
+        ? `<img src="${imgSrc}" alt="${escapeHtml(p.sku)}" class="label-barcode-img" />`
+        : `<div class="label-barcode-fallback">${escapeHtml(p.sku)}</div>`;
       cells.push(`
         <td class="label-cell">
           <div class="label-name">${escapeHtml(p.nama_produk)}</div>
-          <div class="label-barcode">${svg}</div>
+          <div class="label-barcode">${barcodeHtml}</div>
           <div class="label-code">${escapeHtml(p.sku)}</div>
         </td>
       `);
@@ -372,16 +379,17 @@ function buildBarcodeDocHtml(produkList) {
   margin: 8mm 6mm;
 }
 div.Section1 { page: Section1; }
-body { font-family: Arial, sans-serif; margin: 0; }
+body { font-family: Arial, sans-serif; margin: 0; color: #000; }
 .label-sheet { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .label-cell {
   width: 50mm;
   height: 20mm;
-  border: 1px solid #ddd;
+  border: 1px solid #ccc;
   text-align: center;
   vertical-align: middle;
   padding: 1mm 1mm;
   overflow: hidden;
+  color: #000;
 }
 .label-cell--empty { border-color: #f5f5f5; }
 .label-name {
@@ -391,10 +399,32 @@ body { font-family: Arial, sans-serif; margin: 0; }
   max-height: 5mm;
   overflow: hidden;
   margin-bottom: 0.5mm;
+  color: #000;
 }
-.label-barcode { height: 8mm; overflow: hidden; }
-.label-barcode svg { max-width: 46mm; height: 8mm; }
-.label-code { font-size: 7pt; font-weight: bold; margin-top: 0.5mm; }
+.label-barcode {
+  height: 9mm;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.label-barcode-img {
+  width: 46mm;
+  max-width: 100%;
+  height: 9mm;
+  object-fit: contain;
+}
+.label-barcode-fallback {
+  font-size: 8pt;
+  font-weight: bold;
+  color: #000;
+}
+.label-code {
+  font-size: 7pt;
+  font-weight: bold;
+  margin-top: 0.5mm;
+  color: #000;
+}
 .page-break { page-break-after: always; height: 0; }
 </style>
 </head>

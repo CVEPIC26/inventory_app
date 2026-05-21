@@ -1393,6 +1393,24 @@ button:hover {
   border-radius: var(--radius-md);
   border: 1px solid #ffc4ae;
   background: linear-gradient(135deg, #fff5ef, #ffe9dd);
+  color: #000;
+}
+
+.opname-active-banner h4,
+.opname-active-banner .section-eyebrow,
+.opname-active-banner .opname-help-text,
+.opname-active-banner #activeSoKode,
+.opname-active-banner #activeSoMeta {
+  color: #000 !important;
+}
+
+.opname-active-banner h4 {
+  margin: 4px 0;
+  font-size: 1.35rem;
+}
+
+.opname-active-banner .section-eyebrow {
+  color: #333 !important;
 }
 
 .scanner-preview {

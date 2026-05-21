@@ -25,7 +25,10 @@ async function initDB() {
     await pool.query(`
       ALTER TABLE stok_opname ADD COLUMN IF NOT EXISTS checker VARCHAR(150);
       ALTER TABLE stok_opname ADD COLUMN IF NOT EXISTS lokasi VARCHAR(150);
+      ALTER TABLE stok_opname ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+      ALTER TABLE stok_opname ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
       ALTER TABLE stok_opname_detail ADD COLUMN IF NOT EXISTS input_at TIMESTAMP DEFAULT NOW();
+      UPDATE stok_opname SET created_at = COALESCE(updated_at, NOW()) WHERE created_at IS NULL;
     `);
 
     if (fs.existsSync(PERINTAH_SCHEMA)) {

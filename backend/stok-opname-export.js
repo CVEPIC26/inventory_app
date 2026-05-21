@@ -1,29 +1,18 @@
 import pool from "../services/db.js";
-
-async function getOpnameExtraColumns() {
-  const columnResult = await pool.query(`
-    SELECT column_name
-    FROM information_schema.columns
-    WHERE table_schema = 'public'
-      AND table_name = 'stok_opname'
-      AND column_name = ANY($1::text[])
-  `, [["total_item_selisih", "total_selisih_net"]]);
-  return new Set(columnResult.rows.map((row) => row.column_name));
-}
+import { getStokOpnameColumns } from "./opname-db-utils.js";
 
 export default async function handler(req, res) {
   try {
-    if (req.method === 'GET') {
-      // List completed opname sessions
+    if (req.method === "GET") {
       const { bulan, tahun, opname_id } = req.query;
-      const extraColumns = await getOpnameExtraColumns();
+      const columns = await getStokOpnameColumns();
       const extraSelect = [
-        extraColumns.has("total_item_selisih") ? "h.total_item_selisih" : "0 AS total_item_selisih",
-        extraColumns.has("total_selisih_net") ? "h.total_selisih_net" : "0 AS total_selisih_net"
+        columns.has("total_item_selisih") ? "h.total_item_selisih" : "0 AS total_item_selisih",
+        columns.has("total_selisih_net") ? "h.total_selisih_net" : "0 AS total_selisih_net"
       ].join(",\n            ");
+      const createdAtSelect = columns.has("created_at") ? "h.created_at" : "h.tanggal AS created_at";
 
       if (opname_id) {
-        // Get detail of specific opname
         const detailResult = await pool.query(`
           SELECT 
             h.id,
@@ -33,7 +22,7 @@ export default async function handler(req, res) {
             h.total_item,
             h.total_selisih,
             ${extraSelect},
-            h.created_at,
+            ${createdAtSelect},
             d.sku,
             p.nama_produk,
             d.stok_sistem,
@@ -48,14 +37,13 @@ export default async function handler(req, res) {
         `, [opname_id]);
 
         if (!detailResult.rows.length) {
-          return res.status(404).json({ error: 'Stok Opname tidak ditemukan' });
+          return res.status(404).json({ error: "Stok Opname tidak ditemukan" });
         }
 
-        // Group by header
         const header = detailResult.rows[0];
         const details = detailResult.rows
-          .filter(row => row.sku)
-          .map(row => ({
+          .filter((row) => row.sku)
+          .map((row) => ({
             sku: row.sku,
             nama_produk: row.nama_produk,
             stok_sistem: row.stok_sistem,
@@ -80,11 +68,12 @@ export default async function handler(req, res) {
       }
 
       const listExtraSelect = [
-        extraColumns.has("total_item_selisih") ? "total_item_selisih" : "0 AS total_item_selisih",
-        extraColumns.has("total_selisih_net") ? "total_selisih_net" : "0 AS total_selisih_net"
+        columns.has("total_item_selisih") ? "total_item_selisih" : "0 AS total_item_selisih",
+        columns.has("total_selisih_net") ? "total_selisih_net" : "0 AS total_selisih_net"
       ].join(",\n          ");
+      const listCreatedAt = columns.has("created_at") ? "created_at" : "tanggal AS created_at";
+      const listOrder = columns.has("created_at") ? "tanggal DESC, created_at DESC" : "tanggal DESC, id DESC";
 
-      // List all opname sessions for export
       const result = await pool.query(`
         SELECT 
           id,
@@ -94,20 +83,20 @@ export default async function handler(req, res) {
           total_item,
           total_selisih,
           ${listExtraSelect},
-          created_at
+          ${listCreatedAt}
         FROM stok_opname
         WHERE 1=1
-          ${bulan ? 'AND EXTRACT(MONTH FROM tanggal) = $1' : ''}
-          ${tahun ? `AND EXTRACT(YEAR FROM tanggal) = ${bulan ? '$2' : '$1'}` : ''}
-        ORDER BY tanggal DESC, created_at DESC
+          ${bulan ? "AND EXTRACT(MONTH FROM tanggal) = $1" : ""}
+          ${tahun ? `AND EXTRACT(YEAR FROM tanggal) = ${bulan ? "$2" : "$1"}` : ""}
+        ORDER BY ${listOrder}
       `, bulan && tahun ? [bulan, tahun] : (bulan ? [bulan] : (tahun ? [tahun] : [])));
 
       return res.status(200).json(result.rows);
     }
 
-    res.status(405).json({ error: 'Method tidak diizinkan' });
+    res.status(405).json({ error: "Method tidak diizinkan" });
   } catch (err) {
-    console.error('Stok Opname Export ERROR:', err);
+    console.error("Stok Opname Export ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 }
