@@ -824,9 +824,9 @@ button:hover {
 
 .outlet-list-empty {
   padding: 20px;
-  border: 1px dashed #f0c8b8;
+  border: 1px dashed var(--line);
   border-radius: 20px;
-  background: linear-gradient(180deg, #fffdfb 0%, #fff5ef 100%);
+  background: linear-gradient(180deg, var(--surface-strong) 0%, var(--surface-soft) 100%);
   color: var(--muted);
 }
 
@@ -849,26 +849,25 @@ button:hover {
 
 .outlet-list-item:hover {
   transform: translateY(-2px);
-  border-color: rgba(255, 122, 69, 0.5);
-  background: linear-gradient(180deg, #fffefd 0%, #fff4ed 100%);
-  box-shadow: 0 16px 34px rgba(184, 92, 56, 0.1);
+  border-color: rgba(255, 59, 48, 0.45);
+  background: linear-gradient(180deg, rgba(255, 59, 48, 0.12) 0%, var(--surface-strong) 100%);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
 }
 
 .outlet-list-item:focus-visible {
   outline: none;
-  border-color: rgba(255, 90, 31, 0.52);
+  border-color: rgba(255, 59, 48, 0.55);
   box-shadow:
-    0 0 0 4px rgba(255, 90, 31, 0.12),
-    0 16px 34px rgba(184, 92, 56, 0.1);
+    0 0 0 4px rgba(255, 59, 48, 0.16),
+    0 16px 34px rgba(0, 0, 0, 0.28);
 }
 
 .outlet-list-item.active {
-  border-color: rgba(255, 90, 31, 0.38);
-  background:
-    linear-gradient(135deg, rgba(255, 90, 31, 0.12), rgba(255, 255, 255, 0.98) 38%, rgba(255, 244, 238, 0.95) 100%);
+  border-color: rgba(255, 59, 48, 0.55);
+  background: linear-gradient(135deg, rgba(255, 59, 48, 0.18), var(--surface-strong) 42%, var(--surface) 100%);
   box-shadow:
-    0 18px 36px rgba(184, 92, 56, 0.12),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+    0 18px 36px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(255, 59, 48, 0.2);
 }
 
 .outlet-list-head,
@@ -892,8 +891,8 @@ button:hover {
   flex-wrap: wrap;
   gap: 14px;
   padding: 12px 0 4px;
-  border-top: 1px solid rgba(240, 220, 210, 0.8);
-  border-bottom: 1px solid rgba(240, 220, 210, 0.65);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 
 .outlet-stat {
@@ -930,9 +929,10 @@ button:hover {
   gap: 10px;
   margin-bottom: 18px;
   padding: 18px 20px;
-  border: 1px solid #f3d8cc;
+  border: 1px solid var(--line);
   border-radius: 20px;
-  background: linear-gradient(135deg, #fffaf7 0%, #fff0e8 100%);
+  background: linear-gradient(135deg, var(--surface-strong) 0%, var(--surface-soft) 100%);
+  color: var(--text);
 }
 
 .outlet-detail-hero__status {
@@ -944,6 +944,7 @@ button:hover {
 
 .outlet-detail-hero__status strong {
   font-size: 18px;
+  color: var(--text);
 }
 
 .outlet-detail-hero p {
@@ -1026,6 +1027,7 @@ button:hover {
 .note-panel h4 {
   margin: 0 0 10px;
   font-size: 17px;
+  color: var(--text);
 }
 
 .insight-card p,
@@ -1702,7 +1704,7 @@ code {
 
 #opnameTab .opname-metric span,
 #opnameTab .opname-panel .section-eyebrow {
-  color: var(--accent);
+  color: #ff8a82;
   font-size: 0.76rem;
   text-transform: uppercase;
   letter-spacing: 0;
@@ -1711,13 +1713,13 @@ code {
 
 #opnameTab .opname-metric h2 {
   margin: 8px 0 6px;
-  color: #f8faf5;
+  color: #ffffff;
   font-size: 1.75rem;
   line-height: 1.1;
 }
 
 #opnameTab .opname-metric p {
-  color: #aeb9aa;
+  color: #c5ced8;
   font-size: 0.86rem;
 }
 

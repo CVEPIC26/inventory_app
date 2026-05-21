@@ -528,7 +528,7 @@ function showOpnameTab(event, id) {
     }
   }
   if (id === "opnameBarcode") loadBarcodeGenerator();
-  if (id === "opnameKPI") refreshOpnameMetrics();
+  if (id === "opnameKPI") loadOpnameKpiData();
   if (window.lucide) lucide.createIcons();
 }
 
@@ -591,6 +591,7 @@ function selectMenu(event, menu) {
     syncOpnamePeriodToLocal();
     initPerintahFormDefaults();
     loadPerintahList();
+    loadOpnameKpiData();
     updateOpnameInputVisibility();
   }
 }
@@ -621,6 +622,7 @@ async function applyCurrentFilters() {
   if (currentMenu === "opname") {
     syncOpnamePeriodToLocal();
     await loadPerintahList();
+    await loadOpnameKpiData();
     if (state.activePerintah?.id) await loadStokSistem();
     updateOpnameInputVisibility();
   }
@@ -1618,6 +1620,24 @@ function getOpnameRange() {
   return { bulan, tahun, startDate, endDate };
 }
 
+async function loadOpnameKpiData(options = {}) {
+  const { showSpinner = false } = options;
+  if (showSpinner) showLoader();
+  try {
+    const { bulan, tahun } = getOpnameRange();
+    const qs = new URLSearchParams({ bulan, tahun });
+    const sku = getSelectedSku();
+    if (sku) qs.set('sku', sku);
+    state.opname = toArray(await fetchJson(`/api/stok-sistem?${qs.toString()}`));
+    refreshOpnameMetrics();
+  } catch (error) {
+    console.error('Load opname KPI error:', error);
+    refreshOpnameMetrics();
+  } finally {
+    if (showSpinner) hideLoader();
+  }
+}
+
 async function loadStokSistem() {
   showLoader();
   try {
@@ -1773,15 +1793,22 @@ function refreshOpnameMetrics() {
     return;
   }
 
-  const totalSku = state.opname.length;
-  let totalSistem = 0;
+  const products = Array.isArray(state.opname) ? state.opname : [];
+  const totalSku = products.length || state.produkOptions.length || 0;
+  let totalStokSistemProduk = 0;
+
+  products.forEach((item) => {
+    totalStokSistemProduk += getProductStokSistem(item);
+  });
+
+  let totalSistemScan = 0;
   let totalFisik = 0;
   let totalSelisih = 0;
   let problem = 0;
   const scannedCount = Object.keys(state.opnameScan).length;
 
   Object.values(state.opnameScan).forEach(item => {
-    totalSistem += Number(item.sistem || 0);
+    totalSistemScan += Number(item.sistem || 0);
     totalFisik += Number(item.fisik || 0);
     totalSelisih += Number(item.selisih ?? (item.fisik - item.sistem));
     if (Number(item.selisih ?? (item.fisik - item.sistem)) !== 0) problem += 1;
@@ -1789,11 +1816,12 @@ function refreshOpnameMetrics() {
 
   const remaining = Math.max(totalSku - scannedCount, 0);
   const progress = totalSku ? Math.round((scannedCount / totalSku) * 100) : 0;
+  const stokSistemDisplay = scannedCount > 0 ? totalSistemScan : totalStokSistemProduk;
 
   setText('kpi_opname_total', formatNumber(totalSku));
   setText('kpi_opname_counted', formatNumber(scannedCount));
   setText('kpi_opname_progress', `${progress}% progress`);
-  setText('kpi_opname_sistem', formatNumber(totalSistem));
+  setText('kpi_opname_sistem', formatNumber(stokSistemDisplay));
   setText('kpi_opname_fisik', formatNumber(totalFisik));
   setText('kpi_opname_selisih', formatNumber(totalSelisih));
   setText('kpi_opname_problem', formatNumber(problem));
