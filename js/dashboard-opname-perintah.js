@@ -73,10 +73,6 @@ function editPerintahOpname(id) {
     showToast('Perintah SO tidak ditemukan', false);
     return;
   }
-  if (item.status === 'selesai') {
-    showToast('Perintah yang sudah selesai tidak dapat diedit', false);
-    return;
-  }
   isiFormPerintah(item);
   showOpnameTab(null, 'opnamePerintah');
 }
@@ -91,7 +87,7 @@ async function loadPerintahList() {
 
     if (state.editingPerintahId) {
       const current = state.perintahList.find(item => item.id === state.editingPerintahId);
-      if (current && current.status !== 'selesai') {
+      if (current) {
         isiFormPerintah(current);
       } else {
         resetPerintahForm();
@@ -119,10 +115,7 @@ function renderPerintahListSection() {
 
   const rows = state.perintahList.map(item => {
     const status = PERINTAH_STATUS_LABEL[item.status] || PERINTAH_STATUS_LABEL.menunggu;
-    const canEdit = item.status === 'menunggu' || item.status === 'proses';
-    const editBtn = canEdit
-      ? `<button type="button" class="btn-secondary btn-sm" onclick="editPerintahOpname(${item.id})"><i data-lucide="pencil"></i><span>Edit</span></button>`
-      : '<span class="opname-help-text">—</span>';
+    const editBtn = `<button type="button" class="btn-secondary btn-sm" onclick="editPerintahOpname(${item.id})"><i data-lucide="pencil"></i><span>Edit</span></button>`;
 
     return `
       <tr>
@@ -177,15 +170,14 @@ function renderHasilSoList() {
 
 function renderSoCard(item, mode) {
   const status = PERINTAH_STATUS_LABEL[item.status] || PERINTAH_STATUS_LABEL.menunggu;
-  const canEdit = item.status === 'menunggu' || item.status === 'proses';
   const actionLabel = item.status === 'selesai'
-    ? 'Lihat Hasil'
+    ? 'Lanjut Edit'
     : (item.status === 'proses' ? 'Lanjut Scan' : 'Mulai Scan');
   const clickHandler = mode === 'hasil'
     ? `onclick="handleHasilSoClick(${item.id})"`
     : '';
 
-  const editLink = mode === 'hasil' && canEdit
+  const editLink = mode === 'hasil'
     ? `<button type="button" class="hasil-so-card__edit" onclick="event.stopPropagation(); editPerintahOpname(${item.id})"><i data-lucide="pencil"></i> Edit</button>`
     : '';
 
@@ -265,12 +257,31 @@ async function handleHasilSoClick(perintahId) {
   const perintah = state.perintahList.find(item => item.id === perintahId);
   if (!perintah) return;
 
-  if (perintah.status === 'selesai' && perintah.opname_id) {
-    await showHasilSoDetail(perintah);
-    return;
-  }
-
   await activatePerintahForScan(perintah);
+}
+
+async function loadExistingOpnameScan(opnameId) {
+  const data = await fetchJson(`/api/opname-export?opname_id=${opnameId}`);
+  state.opnameScan = {};
+
+  (data.details || []).forEach((detail) => {
+    const sistem = Number(detail.stok_sistem ?? 0);
+    const fisik = Number(detail.stok_fisik ?? 0);
+    state.opnameScan[detail.sku] = {
+      nama: detail.nama_produk,
+      sistem,
+      fisik,
+      selisih: Number(detail.selisih ?? (fisik - sistem))
+    };
+  });
+
+  const checkerEl = document.getElementById('opnameChecker');
+  const gudangEl = document.getElementById('opnameGudang');
+  if (checkerEl && data.header?.checker) checkerEl.value = data.header.checker;
+  if (gudangEl && data.header?.lokasi) gudangEl.value = data.header.lokasi;
+
+  updateOpnameScanSummary();
+  refreshOpnameMetrics();
 }
 
 async function activatePerintahForScan(perintah, options = {}) {
@@ -295,7 +306,15 @@ async function activatePerintahForScan(perintah, options = {}) {
     const checkerEl = document.getElementById('opnameChecker');
     const gudangEl = document.getElementById('opnameGudang');
     if (checkerEl && !checkerEl.value) checkerEl.value = active.checker || '';
-    if (gudangEl) gudangEl.value = active.lokasi || '';
+    if (gudangEl && !gudangEl.value) gudangEl.value = active.lokasi || '';
+
+    if (active.opname_id) {
+      await loadExistingOpnameScan(active.opname_id);
+    } else {
+      state.opnameScan = {};
+      updateOpnameScanSummary();
+      refreshOpnameMetrics();
+    }
 
     if (!options.skipLoad) {
       await loadStokSistem();
@@ -305,7 +324,10 @@ async function activatePerintahForScan(perintah, options = {}) {
       showOpnameTab(null, 'opnameInput');
     }
 
-    showToast(`Perintah ${active.kode_so} aktif. Silakan scan barang.`);
+    const toastMsg = active.opname_id
+      ? `Perintah ${active.kode_so} aktif. Data sebelumnya dimuat — lanjutkan edit/tambah item.`
+      : `Perintah ${active.kode_so} aktif. Silakan scan barang.`;
+    showToast(toastMsg);
     await loadPerintahList();
   } catch (error) {
     console.error('Activate perintah error:', error);
@@ -384,7 +406,7 @@ async function showHasilSoDetail(perintah) {
       : '<tr><td colspan="5">Belum ada detail hasil.</td></tr>';
 
     const scanBtn = document.getElementById('hasilMulaiScanBtn');
-    if (scanBtn) scanBtn.style.display = perintah.status === 'selesai' ? 'none' : 'inline-flex';
+    if (scanBtn) scanBtn.style.display = 'inline-flex';
 
     document.getElementById('opnameHasilList').style.display = 'none';
     document.getElementById('opnameHasilDetail').style.display = 'block';

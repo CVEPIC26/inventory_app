@@ -132,10 +132,6 @@ export default async function handler(req, res) {
           return res.status(404).json({ error: "Perintah SO tidak ditemukan" });
         }
 
-        if (existing.rows[0].status === "selesai") {
-          return res.status(400).json({ error: "Perintah yang sudah selesai tidak dapat diedit" });
-        }
-
         const duplicate = await pool.query(
           `SELECT id FROM stok_opname_perintah WHERE UPPER(kode_so) = $1 AND id <> $2`,
           [kodeSo, perintahId]
@@ -157,7 +153,7 @@ export default async function handler(req, res) {
             lokasi = $6,
             keterangan = $7,
             updated_at = NOW()
-          WHERE id = $8 AND status IN ('menunggu', 'proses')
+          WHERE id = $8 AND status IN ('menunggu', 'proses', 'selesai')
           RETURNING *
           `,
           [kodeSo, tanggal, bulan, tahun, svpNama, lokasi, keterangan, perintahId]

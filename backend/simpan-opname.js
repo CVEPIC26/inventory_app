@@ -36,9 +36,7 @@ export default async function handler(req, res) {
     }
 
     const perintah = perintahResult.rows[0];
-    if (perintah.status === "selesai" && perintah.opname_id) {
-      return res.status(400).json({ error: `Perintah ${perintah.kode_so} sudah selesai` });
-    }
+    const isUpdate = Boolean(perintah.opname_id);
 
     const skuList = [...new Set(normalizedItems.map((item) => item.sku))];
     const produkResult = await client.query(
@@ -58,13 +56,30 @@ export default async function handler(req, res) {
     await client.query("BEGIN");
     transactionStarted = true;
 
-    const header = await client.query(`
-      INSERT INTO stok_opname (tanggal, total_item, total_selisih, checker, lokasi, keterangan, perintah_id)
-      VALUES ($1, $2, 0, $3, $4, $5, $6)
-      RETURNING id
-    `, [tanggal, normalizedItems.length, checker || null, lokasi || null, keterangan || null, perintah.id]);
+    let opnameId = perintah.opname_id ? Number(perintah.opname_id) : null;
 
-    const opnameId = header.rows[0].id;
+    if (isUpdate) {
+      await client.query(`
+        UPDATE stok_opname
+        SET
+          tanggal = $1,
+          total_item = $2,
+          checker = $3,
+          lokasi = $4,
+          keterangan = $5
+        WHERE id = $6
+      `, [tanggal, normalizedItems.length, checker || null, lokasi || null, keterangan || null, opnameId]);
+
+      await client.query(`DELETE FROM stok_opname_detail WHERE opname_id = $1`, [opnameId]);
+    } else {
+      const header = await client.query(`
+        INSERT INTO stok_opname (tanggal, total_item, total_selisih, checker, lokasi, keterangan, perintah_id)
+        VALUES ($1, $2, 0, $3, $4, $5, $6)
+        RETURNING id
+      `, [tanggal, normalizedItems.length, checker || null, lokasi || null, keterangan || null, perintah.id]);
+
+      opnameId = header.rows[0].id;
+    }
 
     let totalSelisih = 0;
     let totalSelisihNet = 0;
@@ -121,7 +136,7 @@ export default async function handler(req, res) {
         checker = COALESCE($2, checker),
         lokasi = COALESCE($3, lokasi),
         opname_id = $4,
-        completed_at = NOW(),
+        completed_at = COALESCE(completed_at, NOW()),
         updated_at = NOW()
       WHERE id = $1
     `, [perintah.id, checker || null, lokasi || null, opnameId]);
@@ -130,7 +145,9 @@ export default async function handler(req, res) {
     transactionStarted = false;
 
     res.json({
-      message: `Hasil ${perintah.kode_so} berhasil disimpan`,
+      message: isUpdate
+        ? `Hasil ${perintah.kode_so} berhasil diperbarui`
+        : `Hasil ${perintah.kode_so} berhasil disimpan`,
       opname_id: opnameId,
       perintah_id: perintah.id,
       kode_so: perintah.kode_so

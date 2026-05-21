@@ -2421,29 +2421,29 @@ function displayScanResult(product, fisik, sistem) {
   if (!resultDiv || !resultPanel) return;
 
   resultDiv.innerHTML = `
-    <div style="background: white; padding: 12px; border-radius: 6px;">
+    <div style="background: #2a2e33; padding: 12px; border-radius: 6px; color: #f5f7fa;">
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
         <div>
-          <label style="font-size: 12px; color: #666;">SKU</label>
-          <p style="font-weight: 600; margin: 0;">${escapeHtml(product.sku)}</p>
+          <label style="font-size: 12px; color: #a8b0ba;">SKU</label>
+          <p style="font-weight: 600; margin: 0; color: #f5f7fa;">${escapeHtml(product.sku)}</p>
         </div>
         <div>
-          <label style="font-size: 12px; color: #666;">Produk</label>
-          <p style="font-weight: 600; margin: 0;">${escapeHtml(product.nama_barang || product.nama_produk)}</p>
+          <label style="font-size: 12px; color: #a8b0ba;">Produk</label>
+          <p style="font-weight: 600; margin: 0; color: #f5f7fa;">${escapeHtml(product.nama_barang || product.nama_produk)}</p>
         </div>
       </div>
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
-        <div style="text-align: center; padding: 12px; background: #f0f0f0; border-radius: 4px;">
-          <p style="margin: 0; font-size: 12px; color: #666;">Sistem</p>
-          <p style="margin: 0; font-size: 20px; font-weight: 700; color: #333;">${formatNumber(sistem)}</p>
+        <div style="text-align: center; padding: 12px; background: #25292e; border-radius: 4px;">
+          <p style="margin: 0; font-size: 12px; color: #a8b0ba;">Sistem</p>
+          <p style="margin: 0; font-size: 20px; font-weight: 700; color: #f5f7fa;">${formatNumber(sistem)}</p>
         </div>
-        <div style="text-align: center; padding: 12px; background: #f0f0f0; border-radius: 4px;">
-          <p style="margin: 0; font-size: 12px; color: #666;">Fisik</p>
-          <p style="margin: 0; font-size: 20px; font-weight: 700; color: #333;">${formatNumber(fisik)}</p>
+        <div style="text-align: center; padding: 12px; background: #25292e; border-radius: 4px;">
+          <p style="margin: 0; font-size: 12px; color: #a8b0ba;">Fisik</p>
+          <p style="margin: 0; font-size: 20px; font-weight: 700; color: #f5f7fa;">${formatNumber(fisik)}</p>
         </div>
-        <div style="text-align: center; padding: 12px; background: ${selisih === 0 ? '#e8f5e9' : selisih > 0 ? '#fff3e0' : '#ffebee'}; border-radius: 4px;">
-          <p style="margin: 0; font-size: 12px; color: #666;">Selisih</p>
-          <p style="margin: 0; font-size: 20px; font-weight: 700; color: ${selisih === 0 ? '#2e7d32' : selisih > 0 ? '#e65100' : '#c62828'};">${formatNumber(selisih)}</p>
+        <div style="text-align: center; padding: 12px; background: ${selisih === 0 ? 'rgba(52,199,89,0.18)' : selisih > 0 ? 'rgba(255,176,32,0.18)' : 'rgba(255,107,107,0.18)'}; border-radius: 4px;">
+          <p style="margin: 0; font-size: 12px; color: #a8b0ba;">Selisih</p>
+          <p style="margin: 0; font-size: 20px; font-weight: 700; color: ${selisih === 0 ? '#34c759' : selisih > 0 ? '#ffb020' : '#ff6b6b'};">${formatNumber(selisih)}</p>
         </div>
       </div>
     </div>
