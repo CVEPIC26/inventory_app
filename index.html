@@ -97,6 +97,7 @@
     <div class="tab-menu" id="salesTabMenu">
       <button onclick="showTab(event,'kpiTab')" class="active-tab">KPI</button>
       <button onclick="showTab(event,'chartTab')">Grafik</button>
+      <button onclick="showTab(event,'miniReviewTab')">Mini Review</button>
       <button onclick="showTab(event,'outletTransactionTab')">Transaksi Outlet</button>
       <button onclick="showTab(event,'inputTab')">Input</button>
       <button onclick="showTab(event,'importTab')">Import</button>
@@ -154,12 +155,6 @@
           <h3>Grafik Penjualan Tahunan</h3>
           <canvas id="chart"></canvas>
         </div>
-        <div class="card" id="miniReviewCard">
-          <h3>Mini Review Penjualan Modul & Tas</h3>
-          <div id="miniReviewContent">
-            <p>Memuat ringkasan penjualan per level untuk produk modul dan tas.</p>
-          </div>
-        </div>
         <div class="card">
           <h3>Top 5 Produk Terlaris</h3>
           <canvas id="chartTopProduk"></canvas>
@@ -171,6 +166,17 @@
         <div class="card">
           <h3>Status Outlet</h3>
           <canvas id="chartOutletStatus"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section id="miniReviewTab" class="tab-content" style="display:none;">
+      <div class="grid-2">
+        <div class="card">
+          <h3>Mini Review Penjualan Modul & Tas</h3>
+          <div id="miniReviewContent">
+            <p>Memuat ringkasan penjualan per level untuk produk modul dan tas.</p>
+          </div>
         </div>
       </div>
     </section>

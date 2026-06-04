@@ -481,6 +481,8 @@ function showTab(event, id) {
 
   if (id === "chartTab") {
     loadChart();
+  }
+  if (id === "miniReviewTab") {
     loadMiniReview();
   }
   if (id === "outletTransactionTab") loadOutletTransactionMonitor();
