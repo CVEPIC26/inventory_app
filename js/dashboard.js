@@ -5,8 +5,9 @@ let chartOutletStatus = null;
 let currentMenu = "penjualan";
 let selectedSalesOutlet = "";
 const MENU_STORAGE_KEY = "inventoryActiveMenu";
-const VALID_MENUS = ["penjualan", "persediaan", "forecast", "opname"];
+const VALID_MENUS = ["dashboard", "admin", "penjualan", "persediaan", "forecast", "opname"];
 const USER_ONLY_MENUS = ["opname"];
+const ADMIN_MENUS = ["dashboard", "admin", "penjualan", "persediaan", "forecast", "opname"];
 
 const state = {
   produkOptions: [],
@@ -56,11 +57,11 @@ function getCurrentUserRole() {
 
 function getAllowedMenus() {
   if (!isAuthenticated()) return [];
-  return getCurrentUserRole() === 'admin' ? VALID_MENUS : USER_ONLY_MENUS;
+  return getCurrentUserRole() === 'admin' ? ADMIN_MENUS : USER_ONLY_MENUS;
 }
 
 function getDefaultMenuForRole() {
-  return getCurrentUserRole() === 'admin' ? 'penjualan' : 'opname';
+  return getCurrentUserRole() === 'admin' ? 'dashboard' : 'opname';
 }
 
 function canAccessMenu(menu) {
@@ -68,6 +69,16 @@ function canAccessMenu(menu) {
 }
 
 const pageMeta = {
+  dashboard: {
+    eyebrow: "Control Center",
+    title: "Admin Dashboard",
+    caption: "Monitoring operasional warehouse dan approval status untuk admin."
+  },
+  admin: {
+    eyebrow: "Control Center",
+    title: "Admin Panel",
+    caption: "Panel administrasi untuk mengelola warehouse dan sistem."
+  },
   penjualan: {
     eyebrow: "Sales Monitor",
     title: "Dashboard Penjualan",
@@ -725,6 +736,13 @@ function selectMenu(event, menu) {
   document.getElementById("salesTabMenu").style.display = menu === "penjualan" ? "flex" : "none";
   document.querySelectorAll("#salesTabMenu button")
     .forEach(button => button.classList.remove("active-tab"));
+
+  // Handle dashboard and admin menu
+  if (menu === "dashboard" || menu === "admin") {
+    document.getElementById("adminTab").style.display = "block";
+    loadAdminDashboard();
+    return;
+  }
 
   if (menu === "penjualan") {
     document.getElementById("kpiTab").style.display = "block";
@@ -3199,3 +3217,99 @@ function openPrintWindow({ title, subtitle = "", summary = [], headers = [], row
   printWindow.focus();
   printWindow.print();
 }
+
+// ============================================
+// Admin Dashboard Functions
+// ============================================
+
+function loadAdminDashboard() {
+  // Show/hide admin menu item based on role
+  const adminMenuItem = document.getElementById("adminMenuItem");
+  const isAdmin = getCurrentUserRole() === 'admin';
+  if (adminMenuItem) {
+    adminMenuItem.style.display = isAdmin ? 'flex' : 'none';
+  }
+
+  // Load mock data for admin dashboard
+  populateMockAdminKPI();
+  
+  // Initialize Lucide icons
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+}
+
+function populateMockAdminKPI() {
+  // Simulate KPI data loading
+  const mockData = {
+    totalStock: 12450,
+    stockAlert: 23,
+    pendingOpname: 5,
+    pendingApproval: 2
+  };
+
+  document.getElementById("admin_total_stock").textContent = mockData.totalStock.toLocaleString("id-ID");
+  document.getElementById("admin_stock_alert").textContent = mockData.stockAlert;
+  document.getElementById("admin_pending_opname").textContent = mockData.pendingOpname;
+  document.getElementById("admin_pending_approval").textContent = mockData.pendingApproval;
+  document.getElementById("approvalCount").textContent = `${mockData.pendingApproval} pending`;
+}
+
+function refreshAdminDashboard() {
+  showToast("Memuat ulang data admin dashboard...", true);
+  
+  // Reload KPI data
+  populateMockAdminKPI();
+  
+  // Simulate reload
+  setTimeout(() => {
+    showToast("Data admin dashboard telah diperbarui", true);
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  }, 500);
+}
+
+function navigateToAdminSection(section) {
+  showToast(`Navigasi ke ${section}...`, true);
+  
+  // Map section to menu
+  const sectionMap = {
+    'persediaan': 'persediaan',
+    'restock': 'persediaan',
+    'opname': 'opname',
+    'approval': 'opname',
+    'audit': 'persediaan'
+  };
+  
+  const targetMenu = sectionMap[section] || 'persediaan';
+  
+  // Navigate to the menu
+  selectMenu(null, targetMenu);
+}
+
+function filterRecentActivity() {
+  const filter = document.getElementById("activityFilter").value;
+  const activityItems = document.querySelectorAll(".activity-item");
+  
+  activityItems.forEach(item => {
+    if (filter === "all") {
+      item.style.display = "flex";
+      return;
+    }
+    
+    const iconClass = item.querySelector(".activity-item__icon").className;
+    const matchesFilter = iconClass.includes(`activity-${filter}`);
+    item.style.display = matchesFilter ? "flex" : "none";
+  });
+}
+
+// Initialize admin dashboard on page load
+document.addEventListener("DOMContentLoaded", () => {
+  if (isAuthenticated() && getCurrentUserRole() === 'admin') {
+    const adminMenuItem = document.getElementById("adminMenuItem");
+    if (adminMenuItem) {
+      adminMenuItem.style.display = "flex";
+    }
+  }
+});

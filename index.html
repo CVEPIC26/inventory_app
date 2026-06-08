@@ -110,10 +110,14 @@
       </div>
     </div>
 
-    <ul>
-      <li data-menu="penjualan" onclick="selectMenu(event,'penjualan')" class="active">
-        <i data-lucide="bar-chart-3"></i>
-        <span>Penjualan</span>
+    <ul id="sidebarMenu">
+      <li data-menu="dashboard" onclick="selectMenu(event,'dashboard')" class="active">
+        <i data-lucide="layout-dashboard"></i>
+        <span>Dashboard</span>
+      </li>
+      <li data-menu="admin" onclick="selectMenu(event,'admin')" id="adminMenuItem" class="admin-only" style="display:none;">
+        <i data-lucide="shield-check"></i>
+        <span>Admin Panel</span>
       </li>
       <!-- Audit menu removed per redesign request -->
       <li data-menu="persediaan" onclick="selectMenu(event,'persediaan')">
@@ -1016,6 +1020,229 @@
         </div>
       </div>
     </section>
+
+    <!-- Admin Dashboard -->
+    <section id="adminTab" class="tab-content" style="display:none;">
+      <div class="admin-dashboard">
+        <!-- Header -->
+        <div class="admin-header">
+          <div class="admin-header__left">
+            <p class="section-eyebrow">Control Center</p>
+            <h2>Admin Dashboard</h2>
+            <span class="page-caption">Monitoring operasional warehouse dan approval status.</span>
+          </div>
+          <div class="admin-header__right">
+            <button type="button" class="btn-secondary" onclick="refreshAdminDashboard()">
+              <i data-lucide="refresh-cw"></i>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="admin-kpi-grid">
+          <div class="admin-kpi-card kpi-stock" onclick="navigateToAdminSection('persediaan')">
+            <div class="admin-kpi-card__icon">
+              <i data-lucide="boxes"></i>
+            </div>
+            <div class="admin-kpi-card__content">
+              <p class="admin-kpi-card__label">Total Stok</p>
+              <h3 class="admin-kpi-card__value" id="admin_total_stock">0</h3>
+            </div>
+            <div class="admin-kpi-card__status status-normal">Normal</div>
+          </div>
+
+          <div class="admin-kpi-card kpi-alert" onclick="navigateToAdminSection('restock')">
+            <div class="admin-kpi-card__icon">
+              <i data-lucide="alert-triangle"></i>
+            </div>
+            <div class="admin-kpi-card__content">
+              <p class="admin-kpi-card__label">Stock Alert</p>
+              <h3 class="admin-kpi-card__value" id="admin_stock_alert">0</h3>
+            </div>
+            <div class="admin-kpi-card__status status-warning">Warning</div>
+          </div>
+
+          <div class="admin-kpi-card kpi-opname" onclick="navigateToAdminSection('opname')">
+            <div class="admin-kpi-card__icon">
+              <i data-lucide="package-check"></i>
+            </div>
+            <div class="admin-kpi-card__content">
+              <p class="admin-kpi-card__label">Pending Opname</p>
+              <h3 class="admin-kpi-card__value" id="admin_pending_opname">0</h3>
+            </div>
+            <div class="admin-kpi-card__status status-info">Pending</div>
+          </div>
+
+          <div class="admin-kpi-card kpi-approval" onclick="navigateToAdminSection('approval')">
+            <div class="admin-kpi-card__icon">
+              <i data-lucide="clipboard-check"></i>
+            </div>
+            <div class="admin-kpi-card__content">
+              <p class="admin-kpi-card__label">Pending Approval</p>
+              <h3 class="admin-kpi-card__value" id="admin_pending_approval">0</h3>
+            </div>
+            <div class="admin-kpi-card__status status-danger">Action Required</div>
+          </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="admin-content-grid">
+          <!-- Warehouse Health -->
+          <div class="admin-card warehouse-health">
+            <div class="admin-card__header">
+              <div>
+                <p class="section-eyebrow">System Status</p>
+                <h3>Warehouse Health</h3>
+              </div>
+              <div class="health-score" id="healthScore">
+                <span class="health-score__value">85</span>
+                <span class="health-score__label">/ 100</span>
+              </div>
+            </div>
+            <div class="health-indicators">
+              <div class="health-indicator">
+                <div class="health-indicator__header">
+                  <span class="health-indicator__name">Stock Availability</span>
+                  <span class="health-indicator__value healthy">92%</span>
+                </div>
+                <div class="health-indicator__bar">
+                  <div class="health-indicator__fill healthy" style="width: 92%;"></div>
+                </div>
+              </div>
+              <div class="health-indicator">
+                <div class="health-indicator__header">
+                  <span class="health-indicator__name">Restock Risk</span>
+                  <span class="health-indicator__value warning">Medium</span>
+                </div>
+                <div class="health-indicator__bar">
+                  <div class="health-indicator__fill warning" style="width: 65%;"></div>
+                </div>
+              </div>
+              <div class="health-indicator">
+                <div class="health-indicator__header">
+                  <span class="health-indicator__name">Opname Variance</span>
+                  <span class="health-indicator__value healthy">2.3%</span>
+                </div>
+                <div class="health-indicator__bar">
+                  <div class="health-indicator__fill healthy" style="width: 97%;"></div>
+                </div>
+              </div>
+              <div class="health-indicator">
+                <div class="health-indicator__header">
+                  <span class="health-indicator__name">Data Integrity</span>
+                  <span class="health-indicator__value healthy">99%</span>
+                </div>
+                <div class="health-indicator__bar">
+                  <div class="health-indicator__fill healthy" style="width: 99%;"></div>
+                </div>
+              </div>
+            </div>
+            <div class="admin-card__footer">
+              <a href="#" onclick="navigateToAdminSection('audit'); return false;" class="admin-link">
+                <i data-lucide="external-link"></i>
+                View Audit Details
+              </a>
+            </div>
+          </div>
+
+          <!-- Pending Approval -->
+          <div class="admin-card pending-approval">
+            <div class="admin-card__header">
+              <div>
+                <p class="section-eyebrow">Action Required</p>
+                <h3>Pending Approvals</h3>
+              </div>
+              <span class="badge badge-danger" id="approvalCount">0 pending</span>
+            </div>
+            <div class="approval-list" id="approvalList">
+              <div class="empty-state">
+                <i data-lucide="check-circle"></i>
+                <p>Tidak ada approval tertunda</p>
+              </div>
+            </div>
+            <div class="admin-card__footer">
+              <a href="#" onclick="navigateToAdminSection('approval'); return false;" class="admin-link">
+                <i data-lucide="arrow-right"></i>
+                View All Approvals
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="admin-card recent-activity">
+          <div class="admin-card__header">
+            <div>
+              <p class="section-eyebrow">Activity Log</p>
+              <h3>Recent Activity</h3>
+            </div>
+            <div class="activity-filter">
+              <select id="activityFilter" onchange="filterRecentActivity()">
+                <option value="all">Semua</option>
+                <option value="stok">Stok</option>
+                <option value="opname">Opname</option>
+                <option value="approval">Approval</option>
+                <option value="audit">Audit</option>
+              </select>
+            </div>
+          </div>
+          <div class="activity-timeline" id="activityTimeline">
+            <div class="activity-item">
+              <div class="activity-item__time">Baru saja</div>
+              <div class="activity-item__icon activity-stok">
+                <i data-lucide="package-plus"></i>
+              </div>
+              <div class="activity-item__content">
+                <p class="activity-item__text"><strong>Admin</strong> menambahkan stok awal untuk <strong>SKU-001</strong></p>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-item__time">5 menit lalu</div>
+              <div class="activity-item__icon activity-opname">
+                <i data-lucide="clipboard-list"></i>
+              </div>
+              <div class="activity-item__content">
+                <p class="activity-item__text"><strong>Operator</strong> menyelesaikan scan opname untuk <strong>Perintah SO-2024-001</strong></p>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-item__time">15 menit lalu</div>
+              <div class="activity-item__icon activity-approval">
+                <i data-lucide="check"></i>
+              </div>
+              <div class="activity-item__content">
+                <p class="activity-item__text"><strong>Admin</strong> menyetujui penyesuaian stok untuk <strong>SKU-042</strong></p>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-item__time">1 jam lalu</div>
+              <div class="activity-item__icon activity-audit">
+                <i data-lucide="file-text"></i>
+              </div>
+              <div class="activity-item__content">
+                <p class="activity-item__text"><strong>System</strong> mengekspor laporan stok bulanan</p>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-item__time">2 jam lalu</div>
+              <div class="activity-item__icon activity-stok">
+                <i data-lucide="truck"></i>
+              </div>
+              <div class="activity-item__content">
+                <p class="activity-item__text"><strong>Admin</strong> import 45 transaksi pembelian</p>
+              </div>
+            </div>
+          </div>
+          <div class="admin-card__footer">
+            <a href="#" onclick="navigateToAdminSection('audit'); return false;" class="admin-link">
+              <i data-lucide="history"></i>
+              View Full Audit Log
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <div id="toast"></div>
@@ -1106,6 +1333,7 @@
       const userRole = document.getElementById('userRole');
       const loginButton = document.getElementById('loginButton');
       const logoutButton = document.getElementById('logoutButton');
+      const adminMenuItem = document.getElementById('adminMenuItem');
       if (auth?.access_token) {
         const roleLabel = auth.role === 'admin' ? 'Admin' : 'User';
         const displayName = auth.nama_lengkap || auth.username || 'User';
@@ -1119,10 +1347,15 @@
         }
         if (loginButton) loginButton.style.display = 'none';
         if (logoutButton) logoutButton.style.display = 'inline-flex';
+        // Show admin menu item only for admin role
+        if (adminMenuItem) {
+          adminMenuItem.style.display = auth.role === 'admin' ? 'flex' : 'none';
+        }
       } else {
         if (userInfo) userInfo.style.display = 'none';
         if (loginButton) loginButton.style.display = 'inline-flex';
         if (logoutButton) logoutButton.style.display = 'none';
+        if (adminMenuItem) adminMenuItem.style.display = 'none';
       }
     }
 
