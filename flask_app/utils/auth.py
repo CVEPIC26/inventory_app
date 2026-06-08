@@ -7,7 +7,7 @@ from functools import wraps
 from flask import request, jsonify, current_app
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_app.models import User, UserSession, db
+from flask_app.models import User, UserSession, db, RoleEnum
 
 class AuthService:
     """Service untuk menangani authentication"""
@@ -107,12 +107,22 @@ class AuthService:
         if User.query.filter_by(email=email).first():
             return None, "Email already exists"
         
+        # normalize role to RoleEnum if possible
+        try:
+            if isinstance(role, str):
+                role_enum = RoleEnum(role.upper()) if role.isupper() else RoleEnum[role.upper()]
+            else:
+                role_enum = role
+        except Exception:
+            # fallback: use staff_gudang
+            role_enum = RoleEnum.STAFF_GUDANG
+
         user = User(
             username=username,
             email=email,
             password_hash=AuthService.hash_password(password),
             nama_lengkap=nama_lengkap,
-            role=role
+            role=role_enum
         )
         
         try:
