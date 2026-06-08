@@ -21,54 +21,26 @@
       <button id="loginButton" class="btn-secondary" onclick="openLogin('user')">Masuk</button>
     </div>
   </header>
-  <section id="authGate" class="auth-gate" aria-label="Halaman login CV EPIC Warehouse">
-    <div class="auth-gate__shell">
-      <div class="auth-hero-panel">
-        <div class="auth-brand-mark">
-          <img src="/assets/logo.png" alt="CV EPIC Warehouse">
-          <div>
-            <p>CV EPIC Warehouse</p>
-            <h1>Inventory Control Suite</h1>
-          </div>
-        </div>
-        <div class="auth-hero-copy">
-          <p class="section-eyebrow">Secure Warehouse Portal</p>
-          <h2>Sistem inventory profesional dengan akses terpisah untuk Admin dan User Opname.</h2>
-          <p>Admin mengelola seluruh dashboard, persediaan, forecast, dan stok opname. User operasional hanya masuk ke modul stok opname agar proses hitung fisik tetap fokus dan aman.</p>
-        </div>
-        <div class="auth-capability-grid">
-          <div><strong>Admin</strong><span>Akses semua modul</span></div>
-          <div><strong>User</strong><span>Stok opname saja</span></div>
-          <div><strong>Audit</strong><span>Sesi & role terpisah</span></div>
-        </div>
+  <!-- Login modal -->
+  <div id="loginModal" class="login-modal" style="display:none;">
+    <div class="login-panel">
+      <h3>Masuk ke Dashboard</h3>
+      <p class="page-caption" id="loginModeCaption">Pilih akses user untuk operasional atau admin untuk pengaturan penuh.</p>
+      <div class="login-mode-tabs" role="tablist" aria-label="Pilihan akses login">
+        <button type="button" id="loginModeUser" class="active-tab" onclick="setLoginMode('user')">User Operasional</button>
+        <button type="button" id="loginModeAdmin" onclick="setLoginMode('admin')">Admin</button>
       </div>
-
-      <div id="loginModal" class="login-panel auth-login-card">
-        <p class="section-eyebrow">Login Portal</p>
-        <h3>Masuk ke Sistem</h3>
-        <p class="page-caption" id="loginModeCaption">Pilih akses user untuk operasional stok opname atau admin untuk kontrol penuh.</p>
-        <div class="login-mode-tabs" role="tablist" aria-label="Pilihan akses login">
-          <button type="button" id="loginModeUser" class="active-tab" onclick="setLoginMode('user')">
-            <i data-lucide="clipboard-check"></i>
-            <span>User Opname</span>
-          </button>
-          <button type="button" id="loginModeAdmin" onclick="setLoginMode('admin')">
-            <i data-lucide="shield-check"></i>
-            <span>Admin</span>
-          </button>
-        </div>
-        <div class="auth-mode-note" id="authModeNote">User hanya mendapat akses modul stok opname.</div>
-        <label class="filter-control">
-          <span>Username</span>
-          <input type="text" id="loginUsername" placeholder="Masukkan username" autocomplete="username">
-        </label>
-        <label class="filter-control">
-          <span>Password</span>
-          <input type="password" id="loginPassword" placeholder="Masukkan password" autocomplete="current-password" onkeydown="if(event.key==='Enter'){event.preventDefault();performLogin();}">
-        </label>
-        <div class="login-actions">
-          <button class="btn-primary auth-submit" onclick="performLogin()">Masuk ke Dashboard</button>
-        </div>
+      <label class="filter-control">
+        <span>Username</span>
+        <input type="text" id="loginUsername" placeholder="Username" autocomplete="username">
+      </label>
+      <label class="filter-control">
+        <span>Password</span>
+        <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter'){event.preventDefault();performLogin();}">
+      </label>
+      <div class="login-actions">
+        <button class="btn-secondary" onclick="closeLogin()">Batal</button>
+        <button class="btn-primary" onclick="performLogin()">Masuk</button>
       </div>
     </div>
   </section>
@@ -166,10 +138,10 @@
       <p class="page-caption">Tombol berikut diarahkan ke modul yang sudah memiliki layar dan proses data aktif.</p>
       <div class="quick-menu-section">
         <div class="quick-menu-grid">
-          <button class="quick-tile tile-green" data-menu="penjualan" onclick="selectMenu(null,'penjualan')" aria-label="Dashboard Penjualan" tabindex="0"><div class="icon-wrap"><img src="/static/icons/icon-penjualan.svg" alt="" class="tile-svg-icon"></div><span>Penjualan</span></button>
-          <button class="quick-tile tile-blue" data-menu="persediaan" onclick="selectMenu(null,'persediaan')" aria-label="Persediaan Warehouse" tabindex="0"><div class="icon-wrap"><i data-lucide="boxes"></i></div><span>Persediaan</span></button>
-          <button class="quick-tile tile-orange" data-menu="forecast" onclick="selectMenu(null,'forecast')" aria-label="Forecast Penjualan" tabindex="0"><div class="icon-wrap"><i data-lucide="trending-up"></i></div><span>Forecasting</span></button>
-          <button class="quick-tile tile-purple" data-menu="opname" onclick="selectMenu(null,'opname')" aria-label="Stok Opname" tabindex="0"><div class="icon-wrap"><img src="/static/icons/icon-opname.svg" alt="" class="tile-svg-icon"></div><span>Stok Opname</span></button>
+          <button class="quick-tile tile-green" onclick="selectMenu(null,'penjualan')" aria-label="Dashboard Penjualan" tabindex="0"><div class="icon-wrap"><img src="/static/icons/icon-penjualan.svg" alt="" class="tile-svg-icon"></div><span>Penjualan</span></button>
+          <button class="quick-tile tile-blue" onclick="selectMenu(null,'persediaan')" aria-label="Persediaan Warehouse" tabindex="0"><div class="icon-wrap"><i data-lucide="boxes"></i></div><span>Persediaan</span></button>
+          <button class="quick-tile tile-orange" onclick="selectMenu(null,'forecast')" aria-label="Forecast Penjualan" tabindex="0"><div class="icon-wrap"><i data-lucide="trending-up"></i></div><span>Forecasting</span></button>
+          <button class="quick-tile tile-purple" onclick="selectMenu(null,'opname')" aria-label="Stok Opname" tabindex="0"><div class="icon-wrap"><img src="/static/icons/icon-opname.svg" alt="" class="tile-svg-icon"></div><span>Stok Opname</span></button>
         </div>
       </div>
     </div>
@@ -1054,34 +1026,24 @@
   <script>
     let loginMode = 'user';
 
+    function getStoredAuth() {
+      try {
+        return JSON.parse(window.localStorage.getItem('auth_user') || 'null');
+      } catch {
+        return null;
+      }
+    }
+
     function setLoginMode(mode) {
       loginMode = mode === 'admin' ? 'admin' : 'user';
       document.getElementById('loginModeUser')?.classList.toggle('active-tab', loginMode === 'user');
       document.getElementById('loginModeAdmin')?.classList.toggle('active-tab', loginMode === 'admin');
       const caption = document.getElementById('loginModeCaption');
-      const note = document.getElementById('authModeNote');
       if (caption) {
         caption.textContent = loginMode === 'admin'
-          ? 'Portal admin memberi akses penuh ke penjualan, persediaan, forecasting, dan stok opname.'
-          : 'Portal user khusus untuk pekerjaan stok opname.';
+          ? 'Login admin khusus untuk pengaturan penuh dan kontrol semua modul.'
+          : 'Login user operasional untuk staff gudang/checker sesuai role masing-masing.';
       }
-      if (note) {
-        note.textContent = loginMode === 'admin'
-          ? 'Admin mempunyai akses semua modul sesuai migrasi database yang aktif.'
-          : 'User hanya mendapat akses modul stok opname.';
-      }
-    }
-
-    function applyRoleNavigation() {
-      const auth = getStoredAuth();
-      const isAdmin = auth?.role === 'admin';
-      const allowedMenus = isAdmin ? ['penjualan', 'persediaan', 'forecast', 'opname'] : ['opname'];
-      document.querySelectorAll('[data-menu]').forEach((item) => {
-        const menu = item.getAttribute('data-menu');
-        item.style.display = allowedMenus.includes(menu) ? '' : 'none';
-      });
-      const quickMenu = document.getElementById('mainQuickMenu');
-      if (quickMenu) quickMenu.style.display = isAdmin ? '' : 'none';
     }
 
     function updateAuthHeader() {
@@ -1090,7 +1052,7 @@
       const loginButton = document.getElementById('loginButton');
       const logoutButton = document.getElementById('logoutButton');
       if (auth?.access_token) {
-        const roleLabel = auth.role === 'admin' ? 'Admin' : 'User Opname';
+        const roleLabel = auth.role === 'admin' ? 'Admin' : 'User';
         if (badge) {
           badge.textContent = `${auth.nama_lengkap || auth.username} · ${roleLabel}`;
           badge.style.display = 'inline-flex';
@@ -1104,22 +1066,9 @@
       }
     }
 
-    function applyAuthState() {
-      const auth = getStoredAuth();
-      const locked = !auth?.access_token;
-      document.body.classList.toggle('auth-locked', locked);
-      updateAuthHeader();
-      if (locked) {
-        setLoginMode(loginMode || 'user');
-        setTimeout(() => document.getElementById('loginUsername')?.focus(), 80);
-        return;
-      }
-      applyRoleNavigation();
-    }
-
     function openLogin(mode = 'user') {
       setLoginMode(mode);
-      document.body.classList.add('auth-locked');
+      document.getElementById('loginModal').style.display = 'grid';
       setTimeout(() => document.getElementById('loginUsername')?.focus(), 50);
     }
 
@@ -1151,10 +1100,10 @@
         const authData = data.data || data;
         window.localStorage.setItem('auth_user', JSON.stringify(authData));
         document.getElementById('loginPassword').value = '';
-        applyAuthState();
-        showToast(`Login ${authData.role === 'admin' ? 'admin' : 'user opname'} berhasil`, true);
-        if (typeof loadProdukOptions === 'function') await loadProdukOptions();
-        selectMenu(null, authData.role === 'admin' ? getSavedMenu() : 'opname');
+        updateAuthHeader();
+        showToast(`Login ${loginMode === 'admin' ? 'admin' : 'user'} berhasil`, true);
+        closeLogin();
+        applyCurrentFilters();
       } catch (err) {
         console.error(err);
         showToast('Gagal menghubungi server auth', false);
@@ -1174,13 +1123,12 @@
         console.warn('Logout server gagal, sesi lokal tetap dihapus', err);
       } finally {
         window.localStorage.removeItem('auth_user');
-        window.localStorage.removeItem('inventoryActiveMenu');
-        applyAuthState();
+        updateAuthHeader();
         showToast('Anda sudah keluar', true);
       }
     }
 
-    applyAuthState();
+    updateAuthHeader();
   </script>
   <script>
     // Populate mock KPI data for local preview when backend not available

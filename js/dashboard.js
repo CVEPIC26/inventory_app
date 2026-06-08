@@ -6,7 +6,6 @@ let currentMenu = "penjualan";
 let selectedSalesOutlet = "";
 const MENU_STORAGE_KEY = "inventoryActiveMenu";
 const VALID_MENUS = ["penjualan", "persediaan", "forecast", "opname"];
-const USER_ONLY_MENUS = ["opname"];
 
 const state = {
   produkOptions: [],
@@ -104,6 +103,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   selectImport(null, "penjualan");
   selectPersediaanInput(null, "pembelian");
   selectPersediaanImport(null, "pembelian");
+  await loadProdukOptions();
   initOpnameQtyModal();
 
   if (!isAuthenticated()) {
@@ -289,8 +289,12 @@ function escapeHtml(value = "") {
 }
 
 function getAuthHeaders() {
-  const auth = getStoredAuth();
-  return auth?.access_token ? { Authorization: `Bearer ${auth.access_token}` } : {};
+  try {
+    const auth = JSON.parse(window.localStorage.getItem('auth_user') || 'null');
+    return auth?.access_token ? { Authorization: `Bearer ${auth.access_token}` } : {};
+  } catch {
+    return {};
+  }
 }
 
 async function fetchJson(url, options = {}) {
