@@ -102,37 +102,58 @@
   <div class="mobile-menu-backdrop" onclick="closeMobileMenu()"></div>
 
   <aside class="sidebar">
-    <div class="logo">
-      <img src="/assets/logo.png" class="logo-img" alt="CV EPIC Warehouse">
-      <div class="logo-copy">
-        <p class="logo-tag">Inventory Control Suite</p>
-        <h1>CV EPIC Warehouse</h1>
+    <div class="sidebar-brand">
+      <div class="sidebar-brand__logo">
+        <img src="/assets/logo.png" alt="CV EPIC Warehouse">
+      </div>
+      <div class="sidebar-brand__text">
+        <p class="sidebar-brand__tag">Inventory Control</p>
+        <h1 class="sidebar-brand__title">CV EPIC</h1>
       </div>
     </div>
 
-    <ul id="sidebarMenu">
-      <li data-menu="dashboard" onclick="selectMenu(event,'dashboard')" class="active">
-        <i data-lucide="layout-dashboard"></i>
-        <span>Dashboard</span>
-      </li>
-      <li data-menu="admin" onclick="selectMenu(event,'admin')" id="adminMenuItem" class="admin-only" style="display:none;">
-        <i data-lucide="shield-check"></i>
-        <span>Admin Panel</span>
-      </li>
-      <!-- Audit menu removed per redesign request -->
-      <li data-menu="persediaan" onclick="selectMenu(event,'persediaan')">
-        <i data-lucide="boxes"></i>
-        <span>Persediaan</span>
-      </li>
-      <li data-menu="forecast" onclick="selectMenu(event,'forecast')">
-        <i data-lucide="trending-up"></i>
-        <span>Forecasting</span>
-      </li>
-      <li data-menu="opname" onclick="selectMenu(event,'opname')">
-        <i data-lucide="package-check"></i>
-        <span>Stok Opname</span>
-      </li>
-    </ul>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section">
+        <p class="sidebar-section__label">Menu Utama</p>
+        <ul>
+          <li data-menu="dashboard" onclick="selectMenu(event,'dashboard')" class="active">
+            <i data-lucide="layout-dashboard"></i>
+            <span>Dashboard</span>
+          </li>
+          <li data-menu="admin" onclick="selectMenu(event,'admin')" id="adminMenuItem" class="admin-only" style="display:none;">
+            <i data-lucide="shield-check"></i>
+            <span>Admin Panel</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <p class="sidebar-section__label">Operasional</p>
+        <ul>
+          <li data-menu="persediaan" onclick="selectMenu(event,'persediaan')">
+            <i data-lucide="boxes"></i>
+            <span>Persediaan</span>
+          </li>
+          <li data-menu="forecast" onclick="selectMenu(event,'forecast')">
+            <i data-lucide="trending-up"></i>
+            <span>Forecasting</span>
+          </li>
+          <li data-menu="opname" onclick="selectMenu(event,'opname')">
+            <i data-lucide="package-check"></i>
+            <span>Stok Opname</span>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-footer__info">
+        <i data-lucide="info"></i>
+        <span>v1.0.0</span>
+      </div>
+    </div>
   </aside>
 
   <main class="container">

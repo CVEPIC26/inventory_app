@@ -29,6 +29,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+#### Sidebar Redesign
+- **Enhanced Brand Section**
+  - New `sidebar-brand` component with gradient accent at top
+  - Improved logo display with rounded corners and background
+  - Better typography hierarchy (tag and title)
+  - More compact and modern design
+
+- **Section Labels**
+  - Added "Menu Utama" section for main navigation (Dashboard, Admin)
+  - Added "Operasional" section for operational modules (Persediaan, Forecasting, Stok Opname)
+  - Visual divider between sections
+
+- **Improved Navigation Items**
+  - Added left border accent on hover (gradient from primary to accent color)
+  - Better active state with subtle glow effect
+  - Larger icons (20px) for better visibility
+  - Better spacing and border-radius
+
+- **Sidebar Footer**
+  - Added version info footer with info icon
+  - Subtle styling to not distract from main navigation
+
+- **Responsive Improvements**
+  - Better mobile adaptation with proper flex layout
+  - Adjusted brand and menu item sizing for mobile
+  - Improved touch targets
+
 #### Header Redesign
 - **Enhanced Brand Section**
   - Added gradient accent bar for visual distinction
@@ -59,7 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Smooth transitions on all interactive elements
 
 ### Files Changed
-- `css/style.css` - Updated header and related component styles; Added admin dashboard styles
-- `index.html` - Updated header HTML structure, added admin dashboard section, updated auth state JavaScript
+- `css/style.css` - Updated sidebar and header styles, added admin dashboard styles
+- `index.html` - Updated sidebar HTML structure, added admin dashboard section, updated auth state JavaScript
 - `js/dashboard.js` - Added admin dashboard functions, updated menu handling for admin role
 - `CHANGELOG.md` - Documented all changes
