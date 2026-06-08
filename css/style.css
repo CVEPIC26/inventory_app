@@ -44,93 +44,200 @@ select {
   font: inherit;
 }
 
+/* ============================================
+   Sidebar Redesign
+   ============================================ */
+
 .sidebar {
   position: fixed;
   inset: 0 auto 0 0;
   width: 260px;
-  padding: 28px 18px;
-  background:
-    radial-gradient(circle at top, rgba(255, 120, 72, 0.16), transparent 30%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 18%),
-    linear-gradient(180deg, #261b1d 0%, #1b1416 100%);
-  color: #f7efe5;
-  box-shadow: 18px 0 44px rgba(17, 24, 39, 0.18);
-  overflow-y: auto;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #1a1c20 0%, #12141a 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  z-index: 60;
 }
 
-.logo {
-  display: grid;
-  grid-template-columns: 68px 1fr;
-  gap: 14px;
+/* Sidebar Brand */
+.sidebar-brand {
+  display: flex;
   align-items: center;
-  padding: 14px;
-  margin-bottom: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 24px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
-  backdrop-filter: blur(14px);
+  gap: 14px;
+  padding: 20px 18px;
+  margin: 12px 12px 16px;
+  background: linear-gradient(135deg, rgba(255, 59, 48, 0.15), rgba(255, 107, 99, 0.08));
+  border: 1px solid rgba(255, 59, 48, 0.2);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
 }
 
-.logo-img {
-  width: 68px;
-  height: 68px;
+.sidebar-brand::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+}
+
+.sidebar-brand__logo {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.sidebar-brand__logo img {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  border-radius: 18px;
+  border-radius: 10px;
+  padding: 4px;
   background: rgba(255, 255, 255, 0.08);
-  padding: 10px;
 }
 
-.logo-tag {
-  margin: 0 0 6px;
-  color: rgba(247, 239, 229, 0.72);
-  font-size: 11px;
+.sidebar-brand__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-brand__tag {
+  margin: 0 0 2px;
+  color: var(--muted);
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
-.logo-copy h1 {
+.sidebar-brand__title {
   margin: 0;
-  font-size: 20px;
-  line-height: 1.2;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.02em;
 }
 
-.sidebar ul {
+/* Sidebar Navigation */
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 12px;
+}
+
+.sidebar-section {
+  margin-bottom: 8px;
+}
+
+.sidebar-section__label {
+  margin: 0 0 8px 12px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.sidebar-section ul {
   list-style: none;
   padding: 0;
   margin: 0;
-  display: grid;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
+.sidebar-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  margin: 12px 8px;
+}
+
+/* Sidebar Menu Items */
 .sidebar li {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 14px;
-  border-radius: 18px;
+  padding: 12px 14px;
+  border-radius: 12px;
   cursor: pointer;
-  color: rgba(247, 239, 229, 0.84);
+  color: rgba(247, 239, 229, 0.75);
+  font-size: 14px;
+  font-weight: 500;
   border: 1px solid transparent;
-  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.sidebar li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%) scaleY(0);
+  width: 3px;
+  height: 60%;
+  background: linear-gradient(180deg, var(--primary), var(--accent));
+  border-radius: 0 3px 3px 0;
+  transition: transform 0.2s ease;
 }
 
 .sidebar li:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.08);
-  transform: translateX(2px);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+.sidebar li:hover::before {
+  transform: translateY(-50%) scaleY(1);
 }
 
 .sidebar li.active {
-  background: linear-gradient(135deg, rgba(243, 166, 93, 0.26), rgba(255, 100, 41, 0.28));
+  background: linear-gradient(135deg, rgba(255, 59, 48, 0.2), rgba(255, 107, 99, 0.15));
   color: #fff;
-  border-color: rgba(255, 255, 255, 0.10);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 10px 28px rgba(255, 100, 41, 0.16);
+  border-color: rgba(255, 59, 48, 0.25);
+  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.15);
+}
+
+.sidebar li.active::before {
+  transform: translateY(-50%) scaleY(1);
 }
 
 .sidebar li i {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* Admin-only menu styling */
+.sidebar .admin-only {
+  border-left: 3px solid var(--primary);
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+  padding: 12px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-footer__info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.sidebar-footer__info i {
+  width: 14px;
+  height: 14px;
 }
 
 .container {
@@ -2498,6 +2605,9 @@ code {
     transform: translateX(-105%);
     box-shadow: 18px 0 44px rgba(17, 24, 39, 0.22);
     transition: transform 0.22s ease;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
 
   body.mobile-menu-open .sidebar {
@@ -2514,8 +2624,32 @@ code {
     padding: 14px;
   }
 
-  .logo {
-    grid-template-columns: 56px 1fr;
+  .sidebar-brand {
+    padding: 16px 14px;
+    margin: 10px 10px 12px;
+  }
+
+  .sidebar-brand__logo {
+    width: 36px;
+    height: 36px;
+  }
+
+  .sidebar-brand__title {
+    font-size: 16px;
+  }
+
+  .sidebar-nav {
+    padding: 0 10px;
+  }
+
+  .sidebar li {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .sidebar li i {
+    width: 18px;
+    height: 18px;
   }
 
   .kpi-grid,
