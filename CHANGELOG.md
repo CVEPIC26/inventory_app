@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Operator Dashboard
+- **New Operator Dashboard Page** - Built comprehensive operator dashboard following wireframe from `operator-dashboard.md`
+  - Operator Header: Avatar, name, date, sync status
+  - Progress Cards: Tasks completed, items counted, variance found
+  - Task Hari Ini: List of assigned tasks with priority, status, and action buttons
+  - Opname Aktif: Active opname card with progress bar and continue scan button
+
+- **Role-Based Dashboard Display**
+  - Non-admin users see operator dashboard when selecting Stok Opname
+  - Admin users see full opname tab with all features
+
+- **Operator Functions** - Added JavaScript functions for operator dashboard interactions
+  - `loadOperatorDashboard()` - Initialize operator dashboard on menu selection
+  - `populateMockOperatorProgress()` - Load progress data
+  - `startTask()`, `continueTask()`, `viewTask()` - Task action handlers
+  - `continueOpname()` - Continue to opname scan mode
+  - `navigateToOperatorSection()` - Navigation helper
+
 #### Admin Dashboard
 - **New Admin Dashboard Page** - Built comprehensive admin dashboard following wireframe from `admin-dashboard.md`
   - KPI Cards: Total Stock, Stock Alert, Pending Opname, Pending Approval
@@ -86,7 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Smooth transitions on all interactive elements
 
 ### Files Changed
-- `css/style.css` - Updated sidebar and header styles, added admin dashboard styles
-- `index.html` - Updated sidebar HTML structure, added admin dashboard section, updated auth state JavaScript
-- `js/dashboard.js` - Added admin dashboard functions, updated menu handling for admin role
+- `css/style.css` - Updated sidebar and header styles; Added admin and operator dashboard styles
+- `index.html` - Updated sidebar HTML structure; Added admin and operator dashboard sections; Updated auth state JavaScript
+- `js/dashboard.js` - Added admin and operator dashboard functions; Updated menu handling for role-based dashboard
 - `CHANGELOG.md` - Documented all changes

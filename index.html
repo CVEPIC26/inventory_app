@@ -1042,6 +1042,167 @@
       </div>
     </section>
 
+    <!-- Operator Dashboard -->
+    <section id="operatorTab" class="tab-content" style="display:none;">
+      <div class="operator-dashboard">
+        <!-- Operator Header -->
+        <div class="operator-header">
+          <div class="operator-header__info">
+            <div class="operator-avatar" id="operatorAvatar">O</div>
+            <div class="operator-meta">
+              <h2 id="operatorName">Operator</h2>
+              <p class="operator-date" id="operatorDate"></p>
+            </div>
+          </div>
+          <div class="operator-header__status">
+            <div class="sync-status synced" id="syncStatus">
+              <i data-lucide="cloud-check"></i>
+              <span>Synced</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Cards -->
+        <div class="operator-progress-grid">
+          <div class="operator-progress-card">
+            <div class="operator-progress-card__icon">
+              <i data-lucide="check-circle"></i>
+            </div>
+            <div class="operator-progress-card__content">
+              <p class="operator-progress-card__label">Tugas Selesai</p>
+              <h3 class="operator-progress-card__value" id="operator_tasks_completed">0<span>/<span id="operator_tasks_total">0</span></span></h3>
+            </div>
+            <div class="operator-progress-card__bar">
+              <div class="operator-progress-card__fill" id="operatorTasksProgress" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div class="operator-progress-card">
+            <div class="operator-progress-card__icon">
+              <i data-lucide="scan"></i>
+            </div>
+            <div class="operator-progress-card__content">
+              <p class="operator-progress-card__label">Item Dihitung</p>
+              <h3 class="operator-progress-card__value" id="operator_items_counted">0</h3>
+            </div>
+            <div class="operator-progress-card__bar">
+              <div class="operator-progress-card__fill" id="operatorItemsProgress" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div class="operator-progress-card">
+            <div class="operator-progress-card__icon warning">
+              <i data-lucide="alert-triangle"></i>
+            </div>
+            <div class="operator-progress-card__content">
+              <p class="operator-progress-card__label">Selisih Ditemukan</p>
+              <h3 class="operator-progress-card__value" id="operator_variance">0</h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="operator-content-grid">
+          <!-- Task Hari Ini -->
+          <div class="operator-card task-list">
+            <div class="operator-card__header">
+              <div>
+                <p class="section-eyebrow">Pekerjaan</p>
+                <h3>Task Hari Ini</h3>
+              </div>
+              <span class="badge badge-info" id="taskCount">0 tugas</span>
+            </div>
+            <div class="task-list__content" id="taskListContent">
+              <div class="task-item">
+                <div class="task-item__priority priority-normal"></div>
+                <div class="task-item__content">
+                  <p class="task-item__title">Stock Opname Rak A1-A5</p>
+                  <p class="task-item__meta">Lokasi: Gudang Utama | Due: Hari ini</p>
+                </div>
+                <div class="task-item__status status-pending">Pending</div>
+                <button class="task-item__action btn-primary btn-sm" onclick="startTask('opname-rak-a1')">Mulai</button>
+              </div>
+              <div class="task-item">
+                <div class="task-item__priority priority-high"></div>
+                <div class="task-item__content">
+                  <p class="task-item__title">Opname Kategori Modul</p>
+                  <p class="task-item__meta">Lokasi: Rak B2-B4 | Due: Besok</p>
+                </div>
+                <div class="task-item__status status-progress">Berjalan</div>
+                <button class="task-item__action btn-secondary btn-sm" onclick="continueTask('opname-modul')">Lanjutkan</button>
+              </div>
+              <div class="task-item completed">
+                <div class="task-item__priority priority-low"></div>
+                <div class="task-item__content">
+                  <p class="task-item__title">Verifikasi Stok Awal</p>
+                  <p class="task-item__meta">Lokasi: Gudang Utama | Selesai 09:30</p>
+                </div>
+                <div class="task-item__status status-done">Selesai</div>
+                <button class="task-item__action btn-ghost btn-sm" onclick="viewTask('verifikasi-stok')">Detail</button>
+              </div>
+            </div>
+            <div class="operator-card__footer">
+              <a href="#" onclick="navigateToOperatorSection('all-tasks'); return false;" class="operator-link">
+                <i data-lucide="list"></i>
+                Lihat Semua Task
+              </a>
+            </div>
+          </div>
+
+          <!-- Opname Aktif -->
+          <div class="operator-card active-opname">
+            <div class="operator-card__header">
+              <div>
+                <p class="section-eyebrow">Sedang Berjalan</p>
+                <h3>Opname Aktif</h3>
+              </div>
+              <span class="badge badge-success">Aktif</span>
+            </div>
+            <div class="active-opname__content" id="activeOpnameContent">
+              <div class="active-opname__info">
+                <div class="active-opname__id">
+                  <span class="label">ID Opname</span>
+                  <span class="value" id="activeOpnameId">SO-2024-0156</span>
+                </div>
+                <div class="active-opname__area">
+                  <span class="label">Area/Kategori</span>
+                  <span class="value" id="activeOpnameArea">Modul A-F</span>
+                </div>
+              </div>
+              <div class="active-opname__progress">
+                <div class="progress-header">
+                  <span>Progress</span>
+                  <span id="opnameProgressPercent">72%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" id="opnameProgressBar" style="width: 72%;"></div>
+                </div>
+                <p class="progress-meta"><span id="opnameItemsDone">36</span> dari <span id="opnameItemsTotal">50</span> item</p>
+              </div>
+              <div class="active-opname__meta">
+                <div class="meta-item">
+                  <i data-lucide="clock"></i>
+                  <span>Update terakhir: <span id="opnameLastUpdate">5 menit lalu</span></span>
+                </div>
+              </div>
+            </div>
+            <div class="operator-card__actions">
+              <button class="btn-primary" onclick="continueOpname()">
+                <i data-lucide="scan"></i>
+                Lanjutkan Opname
+              </button>
+            </div>
+            <div class="operator-card__footer">
+              <a href="#" onclick="navigateToOperatorSection('opname-history'); return false;" class="operator-link">
+                <i data-lucide="history"></i>
+                Riwayat Opname
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Admin Dashboard -->
     <section id="adminTab" class="tab-content" style="display:none;">
       <div class="admin-dashboard">
