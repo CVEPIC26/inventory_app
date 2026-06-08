@@ -36,6 +36,36 @@ const state = {
   opnameHistory: []
 };
 
+
+function getStoredAuth() {
+  try {
+    return JSON.parse(window.localStorage.getItem('auth_user') || 'null');
+  } catch {
+    return null;
+  }
+}
+
+function isAuthenticated() {
+  return Boolean(getStoredAuth()?.access_token);
+}
+
+function getCurrentUserRole() {
+  return getStoredAuth()?.role || null;
+}
+
+function getAllowedMenus() {
+  if (!isAuthenticated()) return [];
+  return getCurrentUserRole() === 'admin' ? VALID_MENUS : USER_ONLY_MENUS;
+}
+
+function getDefaultMenuForRole() {
+  return getCurrentUserRole() === 'admin' ? 'penjualan' : 'opname';
+}
+
+function canAccessMenu(menu) {
+  return getAllowedMenus().includes(menu);
+}
+
 const pageMeta = {
   penjualan: {
     eyebrow: "Sales Monitor",
@@ -75,12 +105,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   selectPersediaanImport(null, "pembelian");
   await loadProdukOptions();
   initOpnameQtyModal();
+
+  if (!isAuthenticated()) {
+    window.applyAuthState?.();
+    return;
+  }
+
+  await loadProdukOptions();
+  window.applyAuthState?.();
   selectMenu(null, getSavedMenu());
 });
 
 function getSavedMenu() {
   const savedMenu = window.localStorage.getItem(MENU_STORAGE_KEY);
-  return VALID_MENUS.includes(savedMenu) ? savedMenu : "penjualan";
+  return canAccessMenu(savedMenu) ? savedMenu : getDefaultMenuForRole();
 }
 
 function toggleMobileMenu() {
@@ -658,7 +696,15 @@ function showOpnameTab(event, id) {
 }
 
 function selectMenu(event, menu) {
-  if (!VALID_MENUS.includes(menu)) menu = "penjualan";
+  if (!isAuthenticated()) {
+    window.applyAuthState?.();
+    return;
+  }
+  if (!VALID_MENUS.includes(menu)) menu = getDefaultMenuForRole();
+  if (!canAccessMenu(menu)) {
+    showToast('Akses user hanya untuk Stok Opname', false);
+    menu = getDefaultMenuForRole();
+  }
   currentMenu = menu;
   window.localStorage.setItem(MENU_STORAGE_KEY, menu);
   closeMobileMenu();

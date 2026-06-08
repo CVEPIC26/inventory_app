@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/css/style.css?v=dark-red-20260521b">
   <link rel="icon" type="image/png" href="/assets/logo.png">
 </head>
-<body>
+<body class="auth-locked">
   <header class="app-header">
     <div class="header-left">
       <button class="mobile-menu-toggle" type="button" onclick="toggleMobileMenu()" aria-label="Buka menu">
@@ -43,7 +43,7 @@
         <button class="btn-primary" onclick="performLogin()">Masuk</button>
       </div>
     </div>
-  </div>
+  </section>
   <button type="button" class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Buka menu">
     <i data-lucide="menu"></i>
   </button>
@@ -59,20 +59,20 @@
     </div>
 
     <ul>
-      <li onclick="selectMenu(event,'penjualan')" class="active">
+      <li data-menu="penjualan" onclick="selectMenu(event,'penjualan')" class="active">
         <i data-lucide="bar-chart-3"></i>
         <span>Penjualan</span>
       </li>
       <!-- Audit menu removed per redesign request -->
-      <li onclick="selectMenu(event,'persediaan')">
+      <li data-menu="persediaan" onclick="selectMenu(event,'persediaan')">
         <i data-lucide="boxes"></i>
         <span>Persediaan</span>
       </li>
-      <li onclick="selectMenu(event,'forecast')">
+      <li data-menu="forecast" onclick="selectMenu(event,'forecast')">
         <i data-lucide="trending-up"></i>
         <span>Forecasting</span>
       </li>
-      <li onclick="selectMenu(event,'opname')">
+      <li data-menu="opname" onclick="selectMenu(event,'opname')">
         <i data-lucide="package-check"></i>
         <span>Stok Opname</span>
       </li>
@@ -1073,7 +1073,7 @@
     }
 
     function closeLogin() {
-      document.getElementById('loginModal').style.display = 'none';
+      if (getStoredAuth()?.access_token) document.body.classList.remove('auth-locked');
     }
 
     async function performLogin() {
@@ -1134,7 +1134,7 @@
     // Populate mock KPI data for local preview when backend not available
     function populateMockKPI() {
       const hasUser = !!window.localStorage.getItem('auth_user');
-      if (hasUser) return; // if logged in, real backend should provide data
+      if (!hasUser) return;
 
       const mapping = {
         kpi_qty: 12450,
@@ -1217,7 +1217,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      populateMockCharts();
+      if (window.localStorage.getItem('auth_user')) populateMockCharts();
     });
   </script>
   <script>
@@ -1240,7 +1240,7 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', () => populateMockPersediaan());
+    document.addEventListener('DOMContentLoaded', () => { if (window.localStorage.getItem('auth_user')) populateMockPersediaan(); });
   </script>
   <script>
     // Populate outlet and top-produk tables for richer preview
@@ -1266,7 +1266,7 @@
       topBody.innerHTML = items.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('');
     }
 
-    document.addEventListener('DOMContentLoaded', () => { populateMockOutlet(); populateMockTopProduk(); });
+    document.addEventListener('DOMContentLoaded', () => { if (window.localStorage.getItem('auth_user')) { populateMockOutlet(); populateMockTopProduk(); } });
   </script>
 </body>
 </html>
