@@ -144,6 +144,10 @@
             <i data-lucide="package-check"></i>
             <span>Stok Opname</span>
           </li>
+          <li data-menu="taskcenter" onclick="selectMenu(event,'taskcenter')">
+            <i data-lucide="clipboard-check"></i>
+            <span>Task Center</span>
+          </li>
         </ul>
       </div>
     </nav>
@@ -1421,6 +1425,182 @@
               <i data-lucide="history"></i>
               View Full Audit Log
             </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Task Center -->
+    <section id="taskcenterTab" class="tab-content" style="display:none;">
+      <div class="taskcenter">
+        <!-- Header -->
+        <div class="taskcenter-header">
+          <div class="taskcenter-header__left">
+            <p class="section-eyebrow">Task Management</p>
+            <h2>Task Center</h2>
+            <span class="page-caption">Kelola dan lacak semua tugas operasional warehouse.</span>
+          </div>
+          <div class="taskcenter-header__right">
+            <div class="taskcenter-search">
+              <i data-lucide="search"></i>
+              <input type="text" id="taskcenterSearch" placeholder="Cari tugas..." oninput="filterTasks()">
+            </div>
+            <button type="button" class="btn-primary" onclick="openCreateTaskModal()">
+              <i data-lucide="plus"></i>
+              Buat Task
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="taskcenter-filters">
+          <div class="filter-bar">
+            <label class="filter-control">
+              <span>Status</span>
+              <select id="taskcenterStatusFilter" onchange="filterTasks()">
+                <option value="">Semua Status</option>
+                <option value="draft">Draft</option>
+                <option value="assigned">Assigned</option>
+                <option value="in_progress">In Progress</option>
+                <option value="review">Review</option>
+                <option value="approved">Approved</option>
+                <option value="closed">Closed</option>
+              </select>
+            </label>
+            <label class="filter-control">
+              <span>Priority</span>
+              <select id="taskcenterPriorityFilter" onchange="filterTasks()">
+                <option value="">Semua Priority</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </label>
+            <label class="filter-control">
+              <span>Assignee</span>
+              <select id="taskcenterAssigneeFilter" onchange="filterTasks()">
+                <option value="">Semua Assignee</option>
+                <option value="admin">Admin</option>
+                <option value="operator">Operator</option>
+              </select>
+            </label>
+          </div>
+          <div class="taskcenter-view-toggle">
+            <button type="button" class="view-btn active" onclick="setTaskView('list')" title="List View">
+              <i data-lucide="list"></i>
+            </button>
+            <button type="button" class="view-btn" onclick="setTaskView('board')" title="Board View">
+              <i data-lucide="layout-grid"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Task Stats -->
+        <div class="taskcenter-stats">
+          <div class="task-stat">
+            <span class="task-stat__value" id="taskCountTotal">8</span>
+            <span class="task-stat__label">Total Tasks</span>
+          </div>
+          <div class="task-stat stat-draft">
+            <span class="task-stat__value" id="taskCountDraft">1</span>
+            <span class="task-stat__label">Draft</span>
+          </div>
+          <div class="task-stat stat-assigned">
+            <span class="task-stat__value" id="taskCountAssigned">2</span>
+            <span class="task-stat__label">Assigned</span>
+          </div>
+          <div class="task-stat stat-progress">
+            <span class="task-stat__value" id="taskCountInProgress">2</span>
+            <span class="task-stat__label">In Progress</span>
+          </div>
+          <div class="task-stat stat-review">
+            <span class="task-stat__value" id="taskCountReview">1</span>
+            <span class="task-stat__label">Review</span>
+          </div>
+          <div class="task-stat stat-closed">
+            <span class="task-stat__value" id="taskCountClosed">2</span>
+            <span class="task-stat__label">Closed</span>
+          </div>
+        </div>
+
+        <!-- Task List View -->
+        <div id="taskcenterListView" class="taskcenter-content">
+          <div class="task-list">
+            <div class="task-list-header">
+              <div class="task-col task-col-title">Judul</div>
+              <div class="task-col task-col-status">Status</div>
+              <div class="task-col task-col-priority">Priority</div>
+              <div class="task-col task-col-assignee">Assignee</div>
+              <div class="task-col task-col-due">Due Date</div>
+              <div class="task-col task-col-actions">Actions</div>
+            </div>
+            <div id="taskListBody">
+              <!-- Task rows will be populated by JavaScript -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Task Board View (Hidden by default) -->
+        <div id="taskcenterBoardView" class="taskcenter-board" style="display:none;">
+          <div class="task-board-column" data-status="draft">
+            <div class="task-board-column__header">
+              <span class="status-dot status-dot--draft"></span>
+              <h4>Draft</h4>
+              <span class="task-board-column__count">1</span>
+            </div>
+            <div class="task-board-column__body" id="boardDraft">
+              <!-- Draft tasks -->
+            </div>
+          </div>
+          <div class="task-board-column" data-status="assigned">
+            <div class="task-board-column__header">
+              <span class="status-dot status-dot--assigned"></span>
+              <h4>Assigned</h4>
+              <span class="task-board-column__count">2</span>
+            </div>
+            <div class="task-board-column__body" id="boardAssigned">
+              <!-- Assigned tasks -->
+            </div>
+          </div>
+          <div class="task-board-column" data-status="in_progress">
+            <div class="task-board-column__header">
+              <span class="status-dot status-dot--in-progress"></span>
+              <h4>In Progress</h4>
+              <span class="task-board-column__count">2</span>
+            </div>
+            <div class="task-board-column__body" id="boardInProgress">
+              <!-- In Progress tasks -->
+            </div>
+          </div>
+          <div class="task-board-column" data-status="review">
+            <div class="task-board-column__header">
+              <span class="status-dot status-dot--review"></span>
+              <h4>Review</h4>
+              <span class="task-board-column__count">1</span>
+            </div>
+            <div class="task-board-column__body" id="boardReview">
+              <!-- Review tasks -->
+            </div>
+          </div>
+          <div class="task-board-column" data-status="approved">
+            <div class="task-board-column__header">
+              <span class="status-dot status-dot--approved"></span>
+              <h4>Approved</h4>
+              <span class="task-board-column__count">0</span>
+            </div>
+            <div class="task-board-column__body" id="boardApproved">
+              <!-- Approved tasks -->
+            </div>
+          </div>
+          <div class="task-board-column" data-status="closed">
+            <div class="task-board-column__header">
+              <span class="status-dot status-dot--closed"></span>
+              <h4>Closed</h4>
+              <span class="task-board-column__count">2</span>
+            </div>
+            <div class="task-board-column__body" id="boardClosed">
+              <!-- Closed tasks -->
+            </div>
           </div>
         </div>
       </div>

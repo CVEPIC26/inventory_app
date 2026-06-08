@@ -9,6 +9,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Task Center
+- **New Task Center Page** - Built comprehensive task management center following wireframe from `task-center.md`
+  - Task Center Header: Title, search bar, and create task button
+  - Filter Bar: Status, Priority, and Assignee filters with list/board view toggle
+  - Task Stats: Real-time count of total tasks, drafts, assigned, in progress, review, and closed
+  - Task List View: Full table with title, status chip, priority badge, assignee avatar, due date, and actions
+  - Task Board View: Kanban-style columns for each status (Draft, Assigned, In Progress, Review, Approved, Closed)
+  - Task Detail Drawer: Right-side panel showing full task details with activity feed
+  - Create Task Modal: Form for creating new tasks with title, description, priority, assignee, and due date
+
+- **Task Status System**
+  - Draft (Gray) - Task created but not yet assigned
+  - Assigned (Blue) - Task assigned but work not started
+  - In Progress (Amber) - Work actively underway
+  - Review (Indigo) - Submitted for review
+  - Approved (Green) - Review completed and approved
+  - Closed (Muted Gray) - Task finished and archived
+
+- **Task Priority System**
+  - High (Red badge) - Critical tasks requiring immediate attention
+  - Medium (Amber badge) - Standard priority tasks
+  - Low (Gray badge) - Non-urgent tasks
+
+- **Task Center Functions** - Added JavaScript functions for Task Center interactions
+  - `loadTaskCenter()` - Initialize Task Center on menu selection
+  - `renderTaskList()` - Render task list with filters
+  - `updateTaskStats()` - Update task count statistics
+  - `populateBoardView()` - Populate Kanban board columns
+  - `setTaskView()` - Toggle between list and board views
+  - `filterTasks()` - Filter tasks by search, status, priority, assignee
+  - `openTaskDetail()` / `closeTaskDetail()` - Open/close task detail drawer
+  - `openCreateTaskModal()` / `closeCreateTaskModal()` - Open/close create task modal
+  - `createTask()` - Create new task
+  - `updateTaskStatus()` - Advance task to next status
+  - `isOverdue()` - Check if task is overdue
+
 #### Operator Dashboard
 - **New Operator Dashboard Page** - Built comprehensive operator dashboard following wireframe from `operator-dashboard.md`
   - Operator Header: Avatar, name, date, sync status
@@ -104,7 +140,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Smooth transitions on all interactive elements
 
 ### Files Changed
-- `css/style.css` - Updated sidebar and header styles; Added admin and operator dashboard styles
-- `index.html` - Updated sidebar HTML structure; Added admin and operator dashboard sections; Updated auth state JavaScript
-- `js/dashboard.js` - Added admin and operator dashboard functions; Updated menu handling for role-based dashboard
+- `css/style.css` - Updated sidebar and header styles; Added admin, operator dashboard, and Task Center styles
+- `index.html` - Updated sidebar HTML structure; Added admin, operator dashboard, and Task Center sections; Updated auth state JavaScript
+- `js/dashboard.js` - Added admin, operator dashboard, and Task Center functions; Updated menu handling for role-based dashboard
 - `CHANGELOG.md` - Documented all changes

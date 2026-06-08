@@ -5,9 +5,9 @@ let chartOutletStatus = null;
 let currentMenu = "penjualan";
 let selectedSalesOutlet = "";
 const MENU_STORAGE_KEY = "inventoryActiveMenu";
-const VALID_MENUS = ["dashboard", "admin", "penjualan", "persediaan", "forecast", "opname"];
+const VALID_MENUS = ["dashboard", "admin", "penjualan", "persediaan", "forecast", "opname", "taskcenter"];
 const USER_ONLY_MENUS = ["opname"];
-const ADMIN_MENUS = ["dashboard", "admin", "penjualan", "persediaan", "forecast", "opname"];
+const ADMIN_MENUS = ["dashboard", "admin", "penjualan", "persediaan", "forecast", "opname", "taskcenter"];
 
 const state = {
   produkOptions: [],
@@ -103,6 +103,11 @@ const pageMeta = {
     eyebrow: "Stock Control",
     title: "Stok Opname Gudang",
     caption: "Stok opname mengikuti periode yang sama dengan persediaan agar selisih rolling lebih akurat."
+  },
+  taskcenter: {
+    eyebrow: "Task Management",
+    title: "Task Center",
+    caption: "Kelola dan lacak semua tugas operasional warehouse dalam satu tempat."
   }
 };
 
@@ -785,6 +790,11 @@ function selectMenu(event, menu) {
       loadOpnameKpiData();
       updateOpnameInputVisibility();
     }
+  }
+
+  if (menu === "taskcenter") {
+    document.getElementById("taskcenterTab").style.display = "block";
+    loadTaskCenter();
   }
 }
 
@@ -3421,4 +3431,527 @@ function navigateToOperatorSection(section) {
 document.addEventListener("DOMContentLoaded", () => {
   // Operator dashboard is shown for non-admin users when they select opname
   // The actual visibility is handled in selectMenu function
+});
+
+/* ============================================
+   Task Center Functions
+   ============================================ */
+
+const TASK_STATUSES = {
+  draft: { label: 'Draft', class: 'status-chip--draft' },
+  assigned: { label: 'Assigned', class: 'status-chip--assigned' },
+  in_progress: { label: 'In Progress', class: 'status-chip--in_progress' },
+  review: { label: 'Review', class: 'status-chip--review' },
+  approved: { label: 'Approved', class: 'status-chip--approved' },
+  closed: { label: 'Closed', class: 'status-chip--closed' }
+};
+
+const TASK_PRIORITIES = {
+  high: { label: 'High', class: 'priority-badge--high' },
+  medium: { label: 'Medium', class: 'priority-badge--medium' },
+  low: { label: 'Low', class: 'priority-badge--low' }
+};
+
+// Mock task data
+const mockTasks = [
+  {
+    id: 'TASK-001',
+    title: 'Lakukan Stok Opname Bulanan',
+    description: 'Lakukan pengecekan dan scan seluruh stok di gudang untuk periode Juni 2026.',
+    status: 'in_progress',
+    priority: 'high',
+    assignee: { id: 'admin', name: 'Admin', initials: 'AD' },
+    dueDate: '2026-06-10',
+    createdAt: '2026-06-01 09:00',
+    activity: [
+      { user: 'Admin', action: 'membuat task', time: '2 jam lalu' },
+      { user: 'Admin', action: 'menugaskan ke Operator', time: '1 jam lalu' },
+      { user: 'Operator', action: 'memulai task', time: '30 menit lalu' }
+    ]
+  },
+  {
+    id: 'TASK-002',
+    title: 'Verifikasi Stok Masuk',
+    description: 'Verifikasi dan approve transaksi stok masuk dari supplier.',
+    status: 'review',
+    priority: 'high',
+    assignee: { id: 'admin', name: 'Admin', initials: 'AD' },
+    dueDate: '2026-06-08',
+    createdAt: '2026-06-05 14:00',
+    activity: [
+      { user: 'Admin', action: 'membuat task', time: '1 hari lalu' },
+      { user: 'Operator', action: 'submit untuk review', time: '2 jam lalu' }
+    ]
+  },
+  {
+    id: 'TASK-003',
+    title: 'Update Data Outlet',
+    description: 'Update informasi dan status outlet yang tidak aktif.',
+    status: 'assigned',
+    priority: 'medium',
+    assignee: { id: 'operator', name: 'Operator', initials: 'OP' },
+    dueDate: '2026-06-15',
+    createdAt: '2026-06-06 10:00',
+    activity: [
+      { user: 'Admin', action: 'membuat task', time: '1 hari lalu' },
+      { user: 'Admin', action: 'menugaskan ke Operator', time: '1 hari lalu' }
+    ]
+  },
+  {
+    id: 'TASK-004',
+    title: 'Generate Laporan Stok',
+    description: 'Buat laporan stok bulanan untuk periode Mei 2026.',
+    status: 'draft',
+    priority: 'low',
+    assignee: { id: 'admin', name: 'Admin', initials: 'AD' },
+    dueDate: '2026-06-20',
+    createdAt: '2026-06-07 08:00',
+    activity: [
+      { user: 'Admin', action: 'membuat task', time: '5 menit lalu' }
+    ]
+  },
+  {
+    id: 'TASK-005',
+    title: 'Cek Stok Rak A1',
+    description: 'Lakukan pengecekan fisik stok di rak A1.',
+    status: 'assigned',
+    priority: 'medium',
+    assignee: { id: 'operator', name: 'Operator', initials: 'OP' },
+    dueDate: '2026-06-09',
+    createdAt: '2026-06-06 16:00',
+    activity: [
+      { user: 'Admin', action: 'membuat task', time: '2 hari lalu' },
+      { user: 'Admin', action: 'menugaskan ke Operator', time: '1 hari lalu' }
+    ]
+  },
+  {
+    id: 'TASK-006',
+    title: 'Restock Modul A',
+    description: 'Lakukan pemesanan restock untuk produk Modul A yang stoknya rendah.',
+    status: 'in_progress',
+    priority: 'high',
+    assignee: { id: 'admin', name: 'Admin', initials: 'AD' },
+    dueDate: '2026-06-07',
+    createdAt: '2026-06-04 11:00',
+    activity: [
+      { user: 'Admin', action: 'membuat task', time: '3 hari lalu' },
+      { user: 'Admin', action: 'memulai task', time: '1 hari lalu' }
+    ]
+  },
+  {
+    id: 'TASK-007',
+    title: 'Export Data Penjualan',
+    description: 'Export data penjualan untuk audit bulanan.',
+    status: 'closed',
+    priority: 'medium',
+    assignee: { id: 'admin', name: 'Admin', initials: 'AD' },
+    dueDate: '2026-06-05',
+    createdAt: '2026-06-01 09:00',
+    activity: [
+      { user: 'Admin', action: 'membuat task', time: '1 minggu lalu' },
+      { user: 'Admin', action: 'menugaskan ke Admin', time: '1 minggu lalu' },
+      { user: 'Admin', action: 'menyelesaikan task', time: '5 hari lalu' }
+    ]
+  },
+  {
+    id: 'TASK-008',
+    title: 'Training Sistem Opname',
+    description: 'Lakukan training penggunaan sistem opname untuk operator baru.',
+    status: 'closed',
+    priority: 'low',
+    assignee: { id: 'operator', name: 'Operator', initials: 'OP' },
+    dueDate: '2026-06-01',
+    createdAt: '2026-05-28 10:00',
+    activity: [
+      { user: 'Admin', action: 'membuat task', time: '2 minggu lalu' },
+      { user: 'Operator', action: 'menyelesaikan task', time: '1 minggu lalu' }
+    ]
+  }
+];
+
+let currentTaskView = 'list';
+
+function loadTaskCenter() {
+  renderTaskList();
+  updateTaskStats();
+  populateBoardView();
+}
+
+function renderTaskList(filteredTasks = mockTasks) {
+  const taskListBody = document.getElementById('taskListBody');
+  if (!taskListBody) return;
+
+  if (filteredTasks.length === 0) {
+    taskListBody.innerHTML = `
+      <div class="task-row" style="justify-content: center; padding: 40px;">
+        <p style="color: var(--muted);">Tidak ada task yang ditemukan</p>
+      </div>
+    `;
+    return;
+  }
+
+  taskListBody.innerHTML = filteredTasks.map(task => `
+    <div class="task-row" onclick="openTaskDetail('${task.id}')">
+      <div class="task-row__title">
+        <i data-lucide="clipboard"></i>
+        <span>${escapeHtml(task.title)}</span>
+      </div>
+      <div>
+        <span class="status-chip ${TASK_STATUSES[task.status]?.class || ''}">${TASK_STATUSES[task.status]?.label || task.status}</span>
+      </div>
+      <div>
+        <span class="priority-badge ${TASK_PRIORITIES[task.priority]?.class || ''}">${TASK_PRIORITIES[task.priority]?.label || task.priority}</span>
+      </div>
+      <div>
+        <div class="task-assignee">
+          <div class="task-assignee__avatar">${task.assignee.initials}</div>
+          <span class="task-assignee__name">${task.assignee.name}</span>
+        </div>
+      </div>
+      <div>
+        <span class="task-due ${isOverdue(task.dueDate) ? 'overdue' : ''}">${formatDate(task.dueDate)}</span>
+      </div>
+      <div class="task-actions">
+        <button type="button" class="task-action-btn" onclick="event.stopPropagation(); openTaskDetail('${task.id}')" title="View">
+          <i data-lucide="eye"></i>
+        </button>
+        <button type="button" class="task-action-btn" onclick="event.stopPropagation(); updateTaskStatus('${task.id}')" title="Update Status">
+          <i data-lucide="edit-2"></i>
+        </button>
+      </div>
+    </div>
+  `).join('');
+
+  // Re-initialize Lucide icons
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+}
+
+function updateTaskStats() {
+  const stats = {
+    total: mockTasks.length,
+    draft: 0,
+    assigned: 0,
+    in_progress: 0,
+    review: 0,
+    closed: 0
+  };
+
+  mockTasks.forEach(task => {
+    if (stats[task.status] !== undefined) {
+      stats[task.status]++;
+    }
+  });
+
+  document.getElementById('taskCountTotal').textContent = stats.total;
+  document.getElementById('taskCountDraft').textContent = stats.draft;
+  document.getElementById('taskCountAssigned').textContent = stats.assigned + stats.in_progress;
+  document.getElementById('taskCountInProgress').textContent = stats.in_progress;
+  document.getElementById('taskCountReview').textContent = stats.review;
+  document.getElementById('taskCountClosed').textContent = stats.closed;
+}
+
+function populateBoardView() {
+  const statuses = ['draft', 'assigned', 'in_progress', 'review', 'approved', 'closed'];
+  
+  statuses.forEach(status => {
+    const container = document.getElementById(`board${status.charAt(0).toUpperCase() + status.slice(1).replace('_', '')}`);
+    if (!container) return;
+
+    const tasks = mockTasks.filter(t => t.status === status);
+    
+    if (tasks.length === 0) {
+      container.innerHTML = '<p style="color: var(--muted); font-size: 12px; text-align: center; padding: 20px;">Tidak ada task</p>';
+      return;
+    }
+
+    container.innerHTML = tasks.map(task => `
+      <div class="task-board-card" onclick="openTaskDetail('${task.id}')">
+        <div class="task-board-card__header">
+          <span class="priority-badge ${TASK_PRIORITIES[task.priority]?.class || ''}">${TASK_PRIORITIES[task.priority]?.label || task.priority}</span>
+        </div>
+        <div class="task-board-card__title">${escapeHtml(task.title)}</div>
+        <div class="task-board-card__meta">
+          <div class="task-board-card__assignee">
+            <div class="task-board-card__avatar">${task.assignee.initials}</div>
+            <span class="task-board-card__name">${task.assignee.name}</span>
+          </div>
+          <span class="task-board-card__due ${isOverdue(task.dueDate) ? 'overdue' : ''}">${formatDate(task.dueDate)}</span>
+        </div>
+      </div>
+    `).join('');
+  });
+
+  // Update column counts
+  document.querySelector('.task-board-column[data-status="draft"] .task-board-column__count').textContent = mockTasks.filter(t => t.status === 'draft').length;
+  document.querySelector('.task-board-column[data-status="assigned"] .task-board-column__count').textContent = mockTasks.filter(t => t.status === 'assigned').length;
+  document.querySelector('.task-board-column[data-status="in_progress"] .task-board-column__count').textContent = mockTasks.filter(t => t.status === 'in_progress').length;
+  document.querySelector('.task-board-column[data-status="review"] .task-board-column__count').textContent = mockTasks.filter(t => t.status === 'review').length;
+  document.querySelector('.task-board-column[data-status="approved"] .task-board-column__count').textContent = mockTasks.filter(t => t.status === 'approved').length;
+  document.querySelector('.task-board-column[data-status="closed"] .task-board-column__count').textContent = mockTasks.filter(t => t.status === 'closed').length;
+}
+
+function setTaskView(view) {
+  currentTaskView = view;
+  
+  const listView = document.getElementById('taskcenterListView');
+  const boardView = document.getElementById('taskcenterBoardView');
+  const viewBtns = document.querySelectorAll('.view-btn');
+
+  if (view === 'list') {
+    listView.style.display = 'block';
+    boardView.style.display = 'none';
+  } else {
+    listView.style.display = 'none';
+    boardView.style.display = 'flex';
+  }
+
+  viewBtns.forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`.view-btn[onclick="setTaskView('${view}')"]`)?.classList.add('active');
+}
+
+function filterTasks() {
+  const search = document.getElementById('taskcenterSearch')?.value.toLowerCase() || '';
+  const statusFilter = document.getElementById('taskcenterStatusFilter')?.value || '';
+  const priorityFilter = document.getElementById('taskcenterPriorityFilter')?.value || '';
+  const assigneeFilter = document.getElementById('taskcenterAssigneeFilter')?.value || '';
+
+  const filtered = mockTasks.filter(task => {
+    const matchesSearch = task.title.toLowerCase().includes(search) || task.id.toLowerCase().includes(search);
+    const matchesStatus = !statusFilter || task.status === statusFilter;
+    const matchesPriority = !priorityFilter || task.priority === priorityFilter;
+    const matchesAssignee = !assigneeFilter || task.assignee.id === assigneeFilter;
+
+    return matchesSearch && matchesStatus && matchesPriority && matchesAssignee;
+  });
+
+  renderTaskList(filtered);
+}
+
+function openTaskDetail(taskId) {
+  const task = mockTasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  // Create or show drawer
+  let drawer = document.querySelector('.task-detail-drawer');
+  if (!drawer) {
+    drawer = document.createElement('div');
+    drawer.className = 'task-detail-drawer';
+    document.body.appendChild(drawer);
+  }
+
+  drawer.innerHTML = `
+    <div class="task-detail-drawer__header">
+      <h3>${escapeHtml(task.id)}</h3>
+      <button type="button" class="task-detail-drawer__close" onclick="closeTaskDetail()">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+    <div class="task-detail-drawer__body">
+      <div class="task-detail-section">
+        <h4>Detail Task</h4>
+        <div class="task-detail-meta">
+          <div class="task-detail-item">
+            <span class="task-detail-item__label">Status</span>
+            <span class="status-chip ${TASK_STATUSES[task.status]?.class || ''}">${TASK_STATUSES[task.status]?.label || task.status}</span>
+          </div>
+          <div class="task-detail-item">
+            <span class="task-detail-item__label">Priority</span>
+            <span class="priority-badge ${TASK_PRIORITIES[task.priority]?.class || ''}">${TASK_PRIORITIES[task.priority]?.label || task.priority}</span>
+          </div>
+          <div class="task-detail-item">
+            <span class="task-detail-item__label">Assignee</span>
+            <span class="task-detail-item__value">${task.assignee.name}</span>
+          </div>
+          <div class="task-detail-item">
+            <span class="task-detail-item__label">Due Date</span>
+            <span class="task-detail-item__value ${isOverdue(task.dueDate) ? 'overdue' : ''}" style="${isOverdue(task.dueDate) ? 'color: var(--danger);' : ''}">${formatDate(task.dueDate)}</span>
+          </div>
+        </div>
+      </div>
+      <div class="task-detail-section">
+        <h4>Judul</h4>
+        <p class="task-detail-description">${escapeHtml(task.title)}</p>
+      </div>
+      <div class="task-detail-section">
+        <h4>Deskripsi</h4>
+        <p class="task-detail-description">${escapeHtml(task.description)}</p>
+      </div>
+      <div class="task-detail-section">
+        <h4>Aktivitas</h4>
+        <div class="task-activity-feed">
+          ${task.activity.map(a => `
+            <div class="activity-feed-item">
+              <div class="activity-feed-item__avatar">${a.user.charAt(0)}</div>
+              <div class="activity-feed-item__content">
+                <p class="activity-feed-item__text"><strong>${a.user}</strong> ${a.action}</p>
+                <p class="activity-feed-item__time">${a.time}</p>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="task-detail-drawer__footer">
+      <button type="button" class="btn-secondary" onclick="closeTaskDetail()">Tutup</button>
+      <button type="button" class="btn-primary" onclick="updateTaskStatus('${task.id}')">Update Status</button>
+    </div>
+  `;
+
+  drawer.classList.add('open');
+  
+  // Re-initialize Lucide icons
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+}
+
+function closeTaskDetail() {
+  const drawer = document.querySelector('.task-detail-drawer');
+  if (drawer) {
+    drawer.classList.remove('open');
+  }
+}
+
+function openCreateTaskModal() {
+  let modal = document.querySelector('.task-create-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.className = 'task-create-modal';
+    modal.innerHTML = `
+      <div class="task-create-modal__content">
+        <div class="task-create-modal__header">
+          <h3>Buat Task Baru</h3>
+          <button type="button" class="task-create-modal__close" onclick="closeCreateTaskModal()">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="task-create-modal__body">
+          <div class="task-form-group">
+            <label for="taskTitle">Judul Task</label>
+            <input type="text" id="taskTitle" placeholder="Masukkan judul task">
+          </div>
+          <div class="task-form-group">
+            <label for="taskDescription">Deskripsi</label>
+            <textarea id="taskDescription" placeholder="Masukkan deskripsi task"></textarea>
+          </div>
+          <div class="task-form-row">
+            <div class="task-form-group">
+              <label for="taskPriority">Priority</label>
+              <select id="taskPriority">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <div class="task-form-group">
+              <label for="taskAssignee">Assignee</label>
+              <select id="taskAssignee">
+                <option value="admin">Admin</option>
+                <option value="operator">Operator</option>
+              </select>
+            </div>
+          </div>
+          <div class="task-form-group">
+            <label for="taskDueDate">Due Date</label>
+            <input type="date" id="taskDueDate">
+          </div>
+        </div>
+        <div class="task-create-modal__footer">
+          <button type="button" class="btn-secondary" onclick="closeCreateTaskModal()">Batal</button>
+          <button type="button" class="btn-primary" onclick="createTask()">Simpan</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  modal.style.display = 'flex';
+  
+  // Re-initialize Lucide icons
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+}
+
+function closeCreateTaskModal() {
+  const modal = document.querySelector('.task-create-modal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+function createTask() {
+  const title = document.getElementById('taskTitle')?.value;
+  const description = document.getElementById('taskDescription')?.value;
+  const priority = document.getElementById('taskPriority')?.value;
+  const assigneeId = document.getElementById('taskAssignee')?.value;
+  const dueDate = document.getElementById('taskDueDate')?.value;
+
+  if (!title) {
+    showToast('Judul task harus diisi', false);
+    return;
+  }
+
+  const assigneeMap = {
+    'admin': { id: 'admin', name: 'Admin', initials: 'AD' },
+    'operator': { id: 'operator', name: 'Operator', initials: 'OP' }
+  };
+
+  const newTask = {
+    id: `TASK-${String(mockTasks.length + 1).padStart(3, '0')}`,
+    title,
+    description: description || '',
+    status: 'draft',
+    priority: priority || 'medium',
+    assignee: assigneeMap[assigneeId] || assigneeMap['admin'],
+    dueDate: dueDate || new Date().toISOString().split('T')[0],
+    createdAt: new Date().toISOString().replace('T', ' ').slice(0, 16),
+    activity: [
+      { user: getCurrentUserRole() === 'admin' ? 'Admin' : 'Operator', action: 'membuat task', time: 'baru saja' }
+    ]
+  };
+
+  mockTasks.unshift(newTask);
+  closeCreateTaskModal();
+  loadTaskCenter();
+  showToast('Task berhasil dibuat', true);
+}
+
+function updateTaskStatus(taskId) {
+  const task = mockTasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  const statusOrder = ['draft', 'assigned', 'in_progress', 'review', 'approved', 'closed'];
+  const currentIndex = statusOrder.indexOf(task.status);
+  
+  if (currentIndex < statusOrder.length - 1) {
+    const nextStatus = statusOrder[currentIndex + 1];
+    task.status = nextStatus;
+    task.activity.unshift({
+      user: getCurrentUserRole() === 'admin' ? 'Admin' : 'Operator',
+      action: `mengubah status ke ${TASK_STATUSES[nextStatus]?.label || nextStatus}`,
+      time: 'baru saja'
+    });
+    
+    loadTaskCenter();
+    closeTaskDetail();
+    showToast(`Status task diupdate ke ${TASK_STATUSES[nextStatus]?.label}`, true);
+  } else {
+    showToast('Task sudah dalam status terakhir', false);
+  }
+}
+
+function isOverdue(dateStr) {
+  if (!dateStr) return false;
+  const dueDate = new Date(dateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return dueDate < today;
+}
+
+// Initialize Task Center when page loads
+document.addEventListener("DOMContentLoaded", () => {
+  // Task center data will be loaded when user selects the menu
 });
