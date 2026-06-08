@@ -13,12 +13,27 @@
       <button class="mobile-menu-toggle" type="button" onclick="toggleMobileMenu()" aria-label="Buka menu">
         <i data-lucide="menu"></i>
       </button>
-      <div class="brand">CV EPIC Warehouse</div>
+      <div class="brand">
+        <span class="brand-accent"></span>
+        <span class="brand-text">CV EPIC Warehouse</span>
+      </div>
     </div>
     <div class="header-right">
-      <span id="authUserBadge" class="auth-user-badge" style="display:none;"></span>
-      <button id="logoutButton" class="btn-secondary" onclick="performLogout()" style="display:none;">Keluar</button>
-      <button id="loginButton" class="btn-secondary" onclick="openLogin('user')">Masuk</button>
+      <div id="authUserBadge" class="user-info" style="display:none;">
+        <div class="user-avatar" id="userAvatar"></div>
+        <div class="user-details">
+          <span class="user-name" id="userName"></span>
+          <span class="user-role" id="userRole"></span>
+        </div>
+      </div>
+      <button id="logoutButton" class="btn-logout" onclick="performLogout()" style="display:none;">
+        <i data-lucide="log-out"></i>
+        <span>Keluar</span>
+      </button>
+      <button id="loginButton" class="btn-login" onclick="openLogin('user')">
+        <i data-lucide="log-in"></i>
+        <span>Masuk</span>
+      </button>
     </div>
   </header>
   <!-- Login-first auth gate -->
@@ -1085,19 +1100,27 @@
 
     function updateAuthHeader() {
       const auth = getStoredAuth();
-      const badge = document.getElementById('authUserBadge');
+      const userInfo = document.getElementById('authUserBadge');
+      const userAvatar = document.getElementById('userAvatar');
+      const userName = document.getElementById('userName');
+      const userRole = document.getElementById('userRole');
       const loginButton = document.getElementById('loginButton');
       const logoutButton = document.getElementById('logoutButton');
       if (auth?.access_token) {
         const roleLabel = auth.role === 'admin' ? 'Admin' : 'User';
-        if (badge) {
-          badge.textContent = `${auth.nama_lengkap || auth.username} · ${roleLabel}`;
-          badge.style.display = 'inline-flex';
+        const displayName = auth.nama_lengkap || auth.username || 'User';
+        const initial = displayName.charAt(0).toUpperCase();
+        if (userInfo) userInfo.style.display = 'flex';
+        if (userAvatar) userAvatar.textContent = initial;
+        if (userName) userName.textContent = displayName;
+        if (userRole) {
+          userRole.textContent = roleLabel;
+          userRole.className = `user-role role-${auth.role || 'user'}`;
         }
         if (loginButton) loginButton.style.display = 'none';
         if (logoutButton) logoutButton.style.display = 'inline-flex';
       } else {
-        if (badge) badge.style.display = 'none';
+        if (userInfo) userInfo.style.display = 'none';
         if (loginButton) loginButton.style.display = 'inline-flex';
         if (logoutButton) logoutButton.style.display = 'none';
       }
