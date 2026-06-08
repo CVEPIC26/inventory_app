@@ -770,14 +770,21 @@ function selectMenu(event, menu) {
   }
 
   if (menu === "opname") {
-    document.getElementById("opnameTab").style.display = "block";
-    showOpnameTab(null, "opnameKPI");
-    document.querySelector(".tab-menu-opname button")?.classList.add("active-tab");
-    syncOpnamePeriodToLocal();
-    initPerintahFormDefaults();
-    loadPerintahList();
-    loadOpnameKpiData();
-    updateOpnameInputVisibility();
+    // For non-admin users, show operator dashboard instead of full opname
+    if (getCurrentUserRole() !== 'admin') {
+      document.getElementById("operatorTab").style.display = "block";
+      loadOperatorDashboard();
+    } else {
+      // For admin users, show the full opname tab
+      document.getElementById("opnameTab").style.display = "block";
+      showOpnameTab(null, "opnameKPI");
+      document.querySelector(".tab-menu-opname button")?.classList.add("active-tab");
+      syncOpnamePeriodToLocal();
+      initPerintahFormDefaults();
+      loadPerintahList();
+      loadOpnameKpiData();
+      updateOpnameInputVisibility();
+    }
   }
 }
 
@@ -3312,4 +3319,106 @@ document.addEventListener("DOMContentLoaded", () => {
       adminMenuItem.style.display = "flex";
     }
   }
+});
+
+// ============================================
+// Operator Dashboard Functions
+// ============================================
+
+function loadOperatorDashboard() {
+  // Update operator info from auth
+  const auth = getStoredAuth();
+  if (auth) {
+    const displayName = auth.nama_lengkap || auth.username || 'Operator';
+    const initial = displayName.charAt(0).toUpperCase();
+    
+    const operatorAvatar = document.getElementById("operatorAvatar");
+    const operatorName = document.getElementById("operatorName");
+    
+    if (operatorAvatar) operatorAvatar.textContent = initial;
+    if (operatorName) operatorName.textContent = displayName;
+  }
+  
+  // Set current date
+  const operatorDate = document.getElementById("operatorDate");
+  if (operatorDate) {
+    const now = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    operatorDate.textContent = now.toLocaleDateString('id-ID', options);
+  }
+  
+  // Load mock progress data
+  populateMockOperatorProgress();
+  
+  // Initialize Lucide icons
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+}
+
+function populateMockOperatorProgress() {
+  // Simulate progress data
+  const mockData = {
+    tasksCompleted: 1,
+    tasksTotal: 3,
+    itemsCounted: 36,
+    varianceFound: 2
+  };
+  
+  // Update DOM
+  document.getElementById("operator_tasks_completed").innerHTML = `${mockData.tasksCompleted}<span>/<span id="operator_tasks_total">${mockData.tasksTotal}</span></span>`;
+  document.getElementById("operator_tasks_total").textContent = mockData.tasksTotal;
+  document.getElementById("operator_items_counted").textContent = mockData.itemsCounted;
+  document.getElementById("operator_variance").textContent = mockData.varianceFound;
+  
+  // Update progress bars
+  const tasksProgress = (mockData.tasksCompleted / mockData.tasksTotal) * 100;
+  document.getElementById("operatorTasksProgress").style.width = `${tasksProgress}%`;
+  
+  // Update task count badge
+  const remainingTasks = mockData.tasksTotal - mockData.tasksCompleted;
+  document.getElementById("taskCount").textContent = `${remainingTasks} tugas`;
+}
+
+function startTask(taskId) {
+  showToast(`Memulai task: ${taskId}`, true);
+  // Navigate to opname for stock opname tasks
+  if (taskId.startsWith('opname')) {
+    selectMenu(null, 'opname');
+  }
+}
+
+function continueTask(taskId) {
+  showToast(`Melanjutkan task: ${taskId}`, true);
+  if (taskId.startsWith('opname')) {
+    selectMenu(null, 'opname');
+  }
+}
+
+function viewTask(taskId) {
+  showToast(`Melihat detail task: ${taskId}`, true);
+}
+
+function continueOpname() {
+  showToast("Melanjutkan opname...", true);
+  selectMenu(null, 'opname');
+}
+
+function navigateToOperatorSection(section) {
+  showToast(`Navigasi ke ${section}...`, true);
+  
+  const sectionMap = {
+    'all-tasks': 'opname',
+    'opname-history': 'opname',
+    'scan': 'opname'
+  };
+  
+  const targetMenu = sectionMap[section] || 'opname';
+  selectMenu(null, targetMenu);
+}
+
+// Initialize operator dashboard on page load
+document.addEventListener("DOMContentLoaded", () => {
+  // Operator dashboard is shown for non-admin users when they select opname
+  // The actual visibility is handled in selectMenu function
 });
