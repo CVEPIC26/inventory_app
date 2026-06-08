@@ -124,24 +124,33 @@
     <!-- Quick main menu tiles (per desain baru) -->
     <div class="card" id="mainQuickMenu">
       <h3>Menu Cepat</h3>
-      <div class="quick-menu-grid">
-        <button class="quick-tile tile-green" onclick="selectMenu(null,'penjualan')"><i data-lucide="file-text"></i><span>Penjualan</span></button>
-        <button class="quick-tile tile-green" onclick="selectMenu(null,'pembelian')"><i data-lucide="shopping-cart"></i><span>Pembelian</span></button>
-        <button class="quick-tile tile-green" onclick="selectMenu(null,'pengiriman')"><i data-lucide="truck"></i><span>Pengiriman</span></button>
-        <button class="quick-tile tile-green" onclick="selectMenu(null,'uang-muka')"><i data-lucide="credit-card"></i><span>Uang Muka</span></button>
-        <button class="quick-tile tile-green" onclick="selectMenu(null,'faktur')"><i data-lucide="file-invoice"></i><span>Faktur</span></button>
+      <div class="quick-menu-section">
+        <h4 class="quick-group">Penjualan</h4>
+        <div class="quick-menu-grid">
+          <button class="quick-tile tile-green" onclick="selectMenu(null,'penjualan')"><div class="icon-wrap"><i data-lucide="file-text"></i></div><span>Penjualan</span></button>
+          <button class="quick-tile tile-green" onclick="selectMenu(null,'pembelian')"><div class="icon-wrap"><i data-lucide="shopping-cart"></i></div><span>Pembelian</span></button>
+          <button class="quick-tile tile-green" onclick="selectMenu(null,'pengiriman')"><div class="icon-wrap"><i data-lucide="truck"></i></div><span>Pengiriman</span></button>
+          <button class="quick-tile tile-green" onclick="selectMenu(null,'uang-muka')"><div class="icon-wrap"><i data-lucide="credit-card"></i></div><span>Uang Muka</span></button>
+          <button class="quick-tile tile-green" onclick="selectMenu(null,'faktur')"><div class="icon-wrap"><i data-lucide="file-invoice"></i></div><span>Faktur</span></button>
+        </div>
 
-        <button class="quick-tile tile-blue" onclick="selectMenu(null,'penerimaan')"><i data-lucide="inbox"></i><span>Penerimaan Penjualan</span></button>
-        <button class="quick-tile tile-blue" onclick="selectMenu(null,'retur')"><i data-lucide="corner-down-left"></i><span>Retur Penjualan</span></button>
-        <button class="quick-tile tile-blue" onclick="selectMenu(null,'kategori-pelanggan')"><i data-lucide="users"></i><span>Kategori Pelanggan</span></button>
-        <button class="quick-tile tile-blue" onclick="selectMenu(null,'kategori-penjualan')"><i data-lucide="tag"></i><span>Kategori Penjualan</span></button>
-        <button class="quick-tile tile-blue" onclick="selectMenu(null,'pelanggan')"><i data-lucide="user"></i><span>Pelanggan</span></button>
+        <h4 class="quick-group">Pelanggan & Kategori</h4>
+        <div class="quick-menu-grid">
+          <button class="quick-tile tile-blue" onclick="selectMenu(null,'penerimaan')"><div class="icon-wrap"><i data-lucide="inbox"></i></div><span>Penerimaan</span></button>
+          <button class="quick-tile tile-blue" onclick="selectMenu(null,'retur')"><div class="icon-wrap"><i data-lucide="corner-down-left"></i></div><span>Retur</span></button>
+          <button class="quick-tile tile-blue" onclick="selectMenu(null,'kategori-pelanggan')"><div class="icon-wrap"><i data-lucide="users"></i></div><span>Kategori Pelanggan</span></button>
+          <button class="quick-tile tile-blue" onclick="selectMenu(null,'kategori-penjualan')"><div class="icon-wrap"><i data-lucide="tag"></i></div><span>Kategori Penjualan</span></button>
+          <button class="quick-tile tile-blue" onclick="selectMenu(null,'pelanggan')"><div class="icon-wrap"><i data-lucide="user"></i></div><span>Pelanggan</span></button>
+        </div>
 
-        <button class="quick-tile tile-orange" onclick="selectMenu(null,'penyesuaian-harga')"><i data-lucide="percent"></i><span>Penyesuaian Harga</span></button>
-        <button class="quick-tile tile-orange" onclick="selectMenu(null,'komisi')"><i data-lucide="gift"></i><span>Komisi Penjual</span></button>
-        <button class="quick-tile tile-orange" onclick="selectMenu(null,'target')"><i data-lucide="target"></i><span>Target Penjualan</span></button>
-        <button class="quick-tile tile-orange" onclick="selectMenu(null,'smartlink')"><i data-lucide="link-2"></i><span>SmartLink e-Commerce</span></button>
-        <button class="quick-tile tile-purple" onclick="selectMenu(null,'checkin')"><i data-lucide="map-pin"></i><span>Check In</span></button>
+        <h4 class="quick-group">Operasional</h4>
+        <div class="quick-menu-grid">
+          <button class="quick-tile tile-orange" onclick="selectMenu(null,'penyesuaian-harga')"><div class="icon-wrap"><i data-lucide="percent"></i></div><span>Penyesuaian Harga</span></button>
+          <button class="quick-tile tile-orange" onclick="selectMenu(null,'komisi')"><div class="icon-wrap"><i data-lucide="gift"></i></div><span>Komisi Penjual</span></button>
+          <button class="quick-tile tile-orange" onclick="selectMenu(null,'target')"><div class="icon-wrap"><i data-lucide="target"></i></div><span>Target Penjualan</span></button>
+          <button class="quick-tile tile-orange" onclick="selectMenu(null,'smartlink')"><div class="icon-wrap"><i data-lucide="link-2"></i></div><span>SmartLink e-Commerce</span></button>
+          <button class="quick-tile tile-purple" onclick="selectMenu(null,'checkin')"><div class="icon-wrap"><i data-lucide="map-pin"></i></div><span>Check In</span></button>
+        </div>
       </div>
     </div>
 
@@ -1061,6 +1070,36 @@
         showToast('Gagal menghubungi server auth', false);
       }
     }
+  </script>
+  <script>
+    // Populate mock KPI data for local preview when backend not available
+    function populateMockKPI() {
+      const hasUser = !!window.localStorage.getItem('auth_user');
+      if (hasUser) return; // if logged in, real backend should provide data
+
+      const mapping = {
+        kpi_qty: 12450,
+        kpi_nilai: 'Rp 2.361.824.148',
+        kpi_produk: 872,
+        kpi_produk_belum: 145,
+        kpi_outlet: 342,
+        kpi_outlet_belum: 12,
+        kpi_modal: 'Rp 1.050.000.000',
+        kpi_profit: 'Rp 1.311.824.148'
+      };
+
+      Object.keys(mapping).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = mapping[id];
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        populateMockKPI();
+        lucide.createIcons();
+      } catch (e) { console.error(e); }
+    });
   </script>
 </body>
 </html>

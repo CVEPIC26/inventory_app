@@ -797,6 +797,16 @@ button:hover {
 .quick-tile.tile-orange{ background: linear-gradient(180deg, rgba(243,166,93,0.04), rgba(243,166,93,0.01)); border-color: rgba(243,166,93,0.12); }
 .quick-tile.tile-purple{ background: linear-gradient(180deg, rgba(168,85,247,0.04), rgba(168,85,247,0.01)); border-color: rgba(168,85,247,0.12); }
 
+.quick-menu-section { margin-top: 10px }
+.quick-group {
+  margin: 8px 6px 6px 6px;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  font-size: 12px;
+}
+
 /* Login modal */
 .login-modal {
   position: fixed;
