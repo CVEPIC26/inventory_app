@@ -90,6 +90,11 @@ class DevelopmentConfig(Config):
     DEBUG = True
     TESTING = False
     SESSION_COOKIE_SECURE = False
+    # Use a lightweight SQLite database for local development to avoid
+    # requiring external DB servers and native drivers (psycopg2).
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or (
+        f"sqlite:///{os.path.join(os.path.dirname(__file__), 'dev.db')}"
+    )
 
 
 class TestingConfig(Config):

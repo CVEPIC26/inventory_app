@@ -618,12 +618,7 @@ function selectMenu(event, menu) {
     return;
   }
 
-  if (menu === "audit") {
-    document.getElementById("auditTab").style.display = "block";
-    showModuleTab(null, "audit", "auditOverview");
-    document.querySelector("#auditMenu button")?.classList.add("active-tab");
-    return;
-  }
+  // Audit menu removed from UI; related code cleaned up
 
   if (menu === "forecast") {
     document.getElementById("forecastTab").style.display = "block";
@@ -658,10 +653,7 @@ async function applyCurrentFilters() {
     return;
   }
 
-  if (currentMenu === "audit") {
-    await loadAudit(getCurrentAuditSection());
-    return;
-  }
+  // Audit removed — no action required here
 
   if (currentMenu === "forecast") {
     await loadForecast();
