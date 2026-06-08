@@ -5,9 +5,9 @@ let chartOutletStatus = null;
 let currentMenu = "penjualan";
 let selectedSalesOutlet = "";
 const MENU_STORAGE_KEY = "inventoryActiveMenu";
-const VALID_MENUS = ["dashboard", "admin", "penjualan", "persediaan", "forecast", "opname", "taskcenter", "approvalcenter"];
+const VALID_MENUS = ["dashboard", "admin", "penjualan", "persediaan", "forecast", "opname", "taskcenter", "approvalcenter", "activity"];
 const USER_ONLY_MENUS = ["opname"];
-const ADMIN_MENUS = ["dashboard", "admin", "penjualan", "persediaan", "forecast", "opname", "taskcenter", "approvalcenter"];
+const ADMIN_MENUS = ["dashboard", "admin", "penjualan", "persediaan", "forecast", "opname", "taskcenter", "approvalcenter", "activity"];
 
 const state = {
   produkOptions: [],
@@ -113,6 +113,11 @@ const pageMeta = {
     eyebrow: "Review & Approval",
     title: "Approval Center",
     caption: "Tinjau dan approve submitted work dari counters dan operators."
+  },
+  activity: {
+    eyebrow: "System Logs",
+    title: "Activity Timeline",
+    caption: "Lacak semua aktivitas dan perubahan dalam sistem secara chronological."
   }
 };
 
@@ -805,6 +810,11 @@ function selectMenu(event, menu) {
   if (menu === "approvalcenter") {
     document.getElementById("approvalcenterTab").style.display = "block";
     loadApprovalCenter();
+  }
+
+  if (menu === "activity") {
+    document.getElementById("activityTab").style.display = "block";
+    loadActivityTimeline();
   }
 }
 
@@ -4434,4 +4444,429 @@ function recountItem(approvalId) {
   closeApprovalDetail();
   loadApprovalCenter();
   showToast(`Recount diminta untuk ${approvalId}`, true);
+}
+
+/* ============================================
+   Activity Timeline Functions
+   ============================================ */
+
+const ACTIVITY_TYPES = {
+  opname: { label: 'Stok Opname', class: 'activity-type-badge--opname', icon: 'package-check' },
+  task: { label: 'Task', class: 'activity-type-badge--task', icon: 'clipboard-check' },
+  approval: { label: 'Approval', class: 'activity-type-badge--approval', icon: 'check-circle' },
+  adjustment: { label: 'Penyesuaian', class: 'activity-type-badge--adjustment', icon: 'sliders' },
+  auth: { label: 'Authentication', class: 'activity-type-badge--auth', icon: 'user-check' },
+  stok: { label: 'Stok', class: 'activity-type-badge--stok', icon: 'boxes' }
+};
+
+// Mock activity data
+const mockActivities = [
+  {
+    id: 'ACT-001',
+    type: 'opname',
+    title: 'Stok opname selesai',
+    description: 'Operator Budi Santoso menyelesaikan stok opname gudang utama dengan 145 SKU dihitung.',
+    actor: { id: 'operator1', name: 'Budi Santoso', initials: 'BS' },
+    timestamp: '2026-06-08 08:45',
+    resourceType: 'opname',
+    resourceId: 'SO-2024-001',
+    details: { skuCount: 145, discrepancyCount: 8 }
+  },
+  {
+    id: 'ACT-002',
+    type: 'approval',
+    title: 'Approval disetujui',
+    description: 'Admin menyetujui stok opname gudang utara untuk periode Mei 2026.',
+    actor: { id: 'admin1', name: 'Admin', initials: 'AD' },
+    timestamp: '2026-06-08 07:30',
+    resourceType: 'approval',
+    resourceId: 'APR-006',
+    details: { approvedItems: 450 }
+  },
+  {
+    id: 'ACT-003',
+    type: 'task',
+    title: 'Task dibuat',
+    description: 'Admin membuat task baru: Lakukan Stok Opname Bulanan.',
+    actor: { id: 'admin1', name: 'Admin', initials: 'AD' },
+    timestamp: '2026-06-08 06:15',
+    resourceType: 'task',
+    resourceId: 'TASK-001',
+    details: { priority: 'high', assignee: 'Operator' }
+  },
+  {
+    id: 'ACT-004',
+    type: 'stok',
+    title: 'Stok masuk',
+    description: 'Penerimaan barang dari supplier: Modul A (50 unit), Tas B (30 unit).',
+    actor: { id: 'operator2', name: 'Siti Rahayu', initials: 'SR' },
+    timestamp: '2026-06-07 16:45',
+    resourceType: 'pembelian',
+    resourceId: 'PO-2024-045',
+    details: { items: 2, totalUnits: 80 }
+  },
+  {
+    id: 'ACT-005',
+    type: 'opname',
+    title: 'Recount diminta',
+    description: 'Admin meminta recount untuk Rak A1 setelah ditemukan discrepancy.',
+    actor: { id: 'admin1', name: 'Admin', initials: 'AD' },
+    timestamp: '2026-06-07 14:20',
+    resourceType: 'opname',
+    resourceId: 'APR-003',
+    details: { location: 'Rak A1' }
+  },
+  {
+    id: 'ACT-006',
+    type: 'approval',
+    title: 'Penyesuaian ditolak',
+    description: 'Admin menolak penyesuaian stok Tas B karena alasan tidak valid.',
+    actor: { id: 'admin1', name: 'Admin', initials: 'AD' },
+    timestamp: '2026-06-07 11:30',
+    resourceType: 'approval',
+    resourceId: 'APR-007',
+    details: { reason: 'Bukti tidak cukup' }
+  },
+  {
+    id: 'ACT-007',
+    type: 'task',
+    title: 'Status task diupdate',
+    description: 'Task "Export Data Penjualan" dipindahkan ke status Closed.',
+    actor: { id: 'admin1', name: 'Admin', initials: 'AD' },
+    timestamp: '2026-06-07 09:00',
+    resourceType: 'task',
+    resourceId: 'TASK-007',
+    details: { oldStatus: 'approved', newStatus: 'closed' }
+  },
+  {
+    id: 'ACT-008',
+    type: 'auth',
+    title: 'User login',
+    description: 'Admin berhasil login ke sistem.',
+    actor: { id: 'admin1', name: 'Admin', initials: 'AD' },
+    timestamp: '2026-06-07 08:00',
+    resourceType: 'auth',
+    resourceId: null,
+    details: { method: 'password' }
+  },
+  {
+    id: 'ACT-009',
+    type: 'stok',
+    title: 'Export laporan stok',
+    description: 'Laporan stok bulanan untuk periode Mei 2026 berhasil di-export.',
+    actor: { id: 'admin1', name: 'Admin', initials: 'AD' },
+    timestamp: '2026-06-06 15:30',
+    resourceType: 'report',
+    resourceId: 'LAP-2024-05',
+    details: { format: 'Excel', period: 'May 2026' }
+  },
+  {
+    id: 'ACT-010',
+    type: 'opname',
+    title: 'Scan barcode selesai',
+    description: 'Operator Ahmad Wijaya menyelesaikan scan barcode untuk 50 item.',
+    actor: { id: 'operator3', name: 'Ahmad Wijaya', initials: 'AW' },
+    timestamp: '2026-06-06 12:00',
+    resourceType: 'opname',
+    resourceId: 'SO-2024-002',
+    details: { itemsScanned: 50 }
+  },
+  {
+    id: 'ACT-011',
+    type: 'adjustment',
+    title: 'Penyesuaian stok diterapkan',
+    description: 'Penyesuaian stok untuk Modul A (+5 unit) berhasil diterapkan.',
+    actor: { id: 'system', name: 'System', initials: 'SY' },
+    timestamp: '2026-06-06 10:15',
+    resourceType: 'adjustment',
+    resourceId: 'ADJ-2024-012',
+    details: { sku: 'SKU-001', change: '+5', reason: 'Recount correction' }
+  },
+  {
+    id: 'ACT-012',
+    type: 'task',
+    title: 'Task ditugaskan',
+    description: 'Task "Update Data Outlet" ditugaskan ke Operator.',
+    actor: { id: 'admin1', name: 'Admin', initials: 'AD' },
+    timestamp: '2026-06-06 09:30',
+    resourceType: 'task',
+    resourceId: 'TASK-003',
+    details: { assignee: 'Operator' }
+  },
+  {
+    id: 'ACT-013',
+    type: 'stok',
+    title: 'Import data penjualan',
+    description: 'Admin import 45 transaksi penjualan dari file CSV.',
+    actor: { id: 'admin1', name: 'Admin', initials: 'AD' },
+    timestamp: '2026-06-05 14:00',
+    resourceType: 'penjualan',
+    resourceId: 'IMP-2024-008',
+    details: { transactions: 45 }
+  },
+  {
+    id: 'ACT-014',
+    type: 'approval',
+    title: 'Approval baru',
+    description: 'Stok opname gudang utama (Juni 2026) menunggu approval.',
+    actor: { id: 'operator1', name: 'Budi Santoso', initials: 'BS' },
+    timestamp: '2026-06-05 10:00',
+    resourceType: 'approval',
+    resourceId: 'APR-001',
+    details: { priority: 'high' }
+  },
+  {
+    id: 'ACT-015',
+    type: 'auth',
+    title: 'User logout',
+    description: 'Operator Budi Santoso logout dari sistem.',
+    actor: { id: 'operator1', name: 'Budi Santoso', initials: 'BS' },
+    timestamp: '2026-06-04 18:00',
+    resourceType: 'auth',
+    resourceId: null,
+    details: { sessionDuration: '8h 30m' }
+  }
+];
+
+let currentActivityView = 'timeline';
+let activityPage = 1;
+const ACTIVITY_PER_PAGE = 10;
+
+function loadActivityTimeline() {
+  renderActivityList();
+  updateActivityStats();
+}
+
+function renderActivityList(filteredActivities = mockActivities) {
+  const activityListBody = document.getElementById('activityListBody');
+  const emptyState = document.getElementById('activityEmptyState');
+  const timelineView = document.getElementById('activityTimelineView');
+  
+  if (!activityListBody) return;
+
+  // Group by date
+  const groupedActivities = groupActivitiesByDate(filteredActivities);
+  
+  if (filteredActivities.length === 0) {
+    timelineView.style.display = 'none';
+    emptyState.style.display = 'flex';
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  timelineView.style.display = 'block';
+  emptyState.style.display = 'none';
+
+  let html = '';
+  
+  if (currentActivityView === 'timeline') {
+    Object.keys(groupedActivities).forEach(date => {
+      html += `<div class="activity-date-group"><span class="activity-date-group__label">${date}</span></div>`;
+      groupedActivities[date].forEach(activity => {
+        html += renderActivityItem(activity);
+      });
+    });
+  } else {
+    // Compact view
+    filteredActivities.forEach(activity => {
+      html += renderActivityItemCompact(activity);
+    });
+  }
+
+  activityListBody.innerHTML = html;
+
+  // Re-initialize Lucide icons
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+}
+
+function renderActivityItem(activity) {
+  const typeInfo = ACTIVITY_TYPES[activity.type] || ACTIVITY_TYPES.stok;
+  
+  return `
+    <div class="activity-item-timeline" onclick="openActivityDetail('${activity.id}')">
+      <div class="activity-icon ${typeInfo.class.replace('activity-type-badge', 'activity-icon')}">
+        <i data-lucide="${typeInfo.icon}"></i>
+      </div>
+      <div class="activity-content">
+        <div class="activity-content__header">
+          <span class="activity-content__title">${escapeHtml(activity.title)}</span>
+          <span class="activity-time">${activity.timestamp}</span>
+        </div>
+        <div class="activity-content__meta">
+          <div class="activity-actor">
+            <div class="activity-actor__avatar">${activity.actor.initials}</div>
+            <span class="activity-actor__name">${activity.actor.name}</span>
+          </div>
+          <span class="activity-type-badge ${typeInfo.class}">${typeInfo.label}</span>
+        </div>
+        <p class="activity-content__description">${escapeHtml(activity.description)}</p>
+        <div class="activity-details">
+          ${activity.resourceId ? `
+            <a href="#" class="activity-resource" onclick="event.preventDefault(); navigateToResource('${activity.resourceType}', '${activity.resourceId}');">
+              <i data-lucide="external-link"></i>
+              ${activity.resourceType}: ${activity.resourceId}
+            </a>
+          ` : ''}
+          ${activity.details.skuCount ? `<span class="activity-detail"><i data-lucide="package"></i><strong>${activity.details.skuCount}</strong> SKU</span>` : ''}
+          ${activity.details.items ? `<span class="activity-detail"><i data-lucide="box"></i><strong>${activity.details.items}</strong> items</span>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderActivityItemCompact(activity) {
+  const typeInfo = ACTIVITY_TYPES[activity.type] || ACTIVITY_TYPES.stok;
+  
+  return `
+    <div class="activity-compact-item" onclick="openActivityDetail('${activity.id}')">
+      <div class="activity-compact-item__icon ${typeInfo.class.replace('activity-type-badge', 'activity-icon')}">
+        <i data-lucide="${typeInfo.icon}"></i>
+      </div>
+      <span class="activity-compact-item__text"><strong>${activity.actor.name}</strong> ${activity.description.toLowerCase()}</span>
+      <span class="activity-compact-item__time">${activity.timestamp}</span>
+    </div>
+  `;
+}
+
+function groupActivitiesByDate(activities) {
+  const groups = {
+    'Hari Ini': [],
+    'Kemarin': [],
+    '7 Hari Terakhir': [],
+    'Lebih Lama': []
+  };
+  
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  activities.forEach(activity => {
+    const activityDate = new Date(activity.timestamp);
+    const diffDays = Math.floor((today - activityDate) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      groups['Hari Ini'].push(activity);
+    } else if (diffDays === 1) {
+      groups['Kemarin'].push(activity);
+    } else if (diffDays <= 7) {
+      groups['7 Hari Terakhir'].push(activity);
+    } else {
+      groups['Lebih Lama'].push(activity);
+    }
+  });
+  
+  // Filter out empty groups
+  return Object.fromEntries(Object.entries(groups).filter(([_, items]) => items.length > 0));
+}
+
+function updateActivityStats() {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  const stats = {
+    total: mockActivities.length,
+    today: 0,
+    opname: 0,
+    task: 0,
+    approval: 0
+  };
+  
+  mockActivities.forEach(activity => {
+    const activityDate = new Date(activity.timestamp);
+    if (activityDate >= today) {
+      stats.today++;
+    }
+    if (activity.type === 'opname') stats.opname++;
+    if (activity.type === 'task') stats.task++;
+    if (activity.type === 'approval') stats.approval++;
+  });
+  
+  document.getElementById('activityCountTotal').textContent = stats.total;
+  document.getElementById('activityCountToday').textContent = stats.today;
+  document.getElementById('activityCountOpname').textContent = stats.opname;
+  document.getElementById('activityCountTask').textContent = stats.task;
+  document.getElementById('activityCountApproval').textContent = stats.approval;
+}
+
+function setActivityView(view) {
+  currentActivityView = view;
+  
+  const viewBtns = document.querySelectorAll('.activity-view-toggle .view-btn');
+  viewBtns.forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`.activity-view-toggle .view-btn[onclick="setActivityView('${view}')"]`)?.classList.add('active');
+  
+  renderActivityList();
+}
+
+function filterActivity() {
+  const search = document.getElementById('activitySearch')?.value.toLowerCase() || '';
+  const typeFilter = document.getElementById('activityTypeFilter')?.value || '';
+  const actorFilter = document.getElementById('activityActorFilter')?.value || '';
+  const dateFilter = document.getElementById('activityDateFilter')?.value || '';
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const weekAgo = new Date(today);
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  const monthAgo = new Date(today);
+  monthAgo.setDate(monthAgo.getDate() - 30);
+
+  const filtered = mockActivities.filter(activity => {
+    const matchesSearch = activity.title.toLowerCase().includes(search) || 
+                          activity.description.toLowerCase().includes(search) ||
+                          activity.id.toLowerCase().includes(search);
+    
+    const matchesType = !typeFilter || activity.type === typeFilter;
+    
+    const matchesActor = !actorFilter || 
+                         (actorFilter === 'admin' && activity.actor.id === 'admin1') ||
+                         (actorFilter === 'operator' && activity.actor.id !== 'admin1' && activity.actor.id !== 'system') ||
+                         (actorFilter === 'system' && activity.actor.id === 'system');
+    
+    let matchesDate = true;
+    if (dateFilter) {
+      const activityDate = new Date(activity.timestamp);
+      if (dateFilter === 'today') {
+        matchesDate = activityDate >= today;
+      } else if (dateFilter === 'yesterday') {
+        matchesDate = activityDate >= yesterday && activityDate < today;
+      } else if (dateFilter === 'week') {
+        matchesDate = activityDate >= weekAgo;
+      } else if (dateFilter === 'month') {
+        matchesDate = activityDate >= monthAgo;
+      }
+    }
+
+    return matchesSearch && matchesType && matchesActor && matchesDate;
+  });
+
+  renderActivityList(filtered);
+}
+
+function refreshActivity() {
+  showToast('Memuat ulang aktivitas...', true);
+  loadActivityTimeline();
+}
+
+function loadMoreActivity() {
+  activityPage++;
+  showToast('Memuat lebih banyak aktivitas...', true);
+  // In a real app, this would fetch more data from the API
+}
+
+function openActivityDetail(activityId) {
+  const activity = mockActivities.find(a => a.id === activityId);
+  if (!activity) return;
+  
+  showToast(`Melihat detail aktivitas: ${activityId}`, true);
+  // In a real app, this would open a detail drawer or modal
+}
+
+function navigateToResource(resourceType, resourceId) {
+  showToast(`Navigasi ke ${resourceType}: ${resourceId}`, true);
+  // In a real app, this would navigate to the resource detail page
 }

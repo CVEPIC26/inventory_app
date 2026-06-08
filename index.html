@@ -152,6 +152,10 @@
             <i data-lucide="check-square"></i>
             <span>Approval Center</span>
           </li>
+          <li data-menu="activity" onclick="selectMenu(event,'activity')">
+            <i data-lucide="activity"></i>
+            <span>Activity Timeline</span>
+          </li>
         </ul>
       </div>
     </nav>
@@ -1703,6 +1707,109 @@
           <i data-lucide="check-circle"></i>
           <h3>Tidak ada approval</h3>
           <p>Tidak ada item yang memerlukan review pada kategori ini.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Activity Timeline -->
+    <section id="activityTab" class="tab-content" style="display:none;">
+      <div class="activity-timeline">
+        <!-- Header -->
+        <div class="activity-timeline-header">
+          <div class="activity-timeline-header__left">
+            <p class="section-eyebrow">System Logs</p>
+            <h2>Activity Timeline</h2>
+            <span class="page-caption">Lacak semua aktivitas dan perubahan dalam sistem secara chronological.</span>
+          </div>
+          <div class="activity-timeline-header__right">
+            <div class="activity-search">
+              <i data-lucide="search"></i>
+              <input type="text" id="activitySearch" placeholder="Cari aktivitas..." oninput="filterActivity()">
+            </div>
+            <button type="button" class="btn-secondary" onclick="refreshActivity()">
+              <i data-lucide="refresh-cw"></i>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="activity-stats">
+          <div class="activity-stat">
+            <span class="activity-stat__value" id="activityCountTotal">24</span>
+            <span class="activity-stat__label">Total Activities</span>
+          </div>
+          <div class="activity-stat stat-today">
+            <span class="activity-stat__value" id="activityCountToday">8</span>
+            <span class="activity-stat__label">Hari Ini</span>
+          </div>
+          <div class="activity-stat stat-opname">
+            <span class="activity-stat__value" id="activityCountOpname">12</span>
+            <span class="activity-stat__label">Stok Opname</span>
+          </div>
+          <div class="activity-stat stat-task">
+            <span class="activity-stat__value" id="activityCountTask">6</span>
+            <span class="activity-stat__label">Task</span>
+          </div>
+          <div class="activity-stat stat-approval">
+            <span class="activity-stat__value" id="activityCountApproval">4</span>
+            <span class="activity-stat__label">Approval</span>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="activity-filters">
+          <div class="activity-filter-group">
+            <select id="activityTypeFilter" onchange="filterActivity()">
+              <option value="">Semua Tipe</option>
+              <option value="opname">Stok Opname</option>
+              <option value="task">Task</option>
+              <option value="approval">Approval</option>
+              <option value="adjustment">Penyesuaian</option>
+              <option value="auth">Authentication</option>
+            </select>
+            <select id="activityActorFilter" onchange="filterActivity()">
+              <option value="">Semua Actor</option>
+              <option value="admin">Admin</option>
+              <option value="operator">Operator</option>
+              <option value="system">System</option>
+            </select>
+            <select id="activityDateFilter" onchange="filterActivity()">
+              <option value="">Semua Waktu</option>
+              <option value="today">Hari Ini</option>
+              <option value="yesterday">Kemarin</option>
+              <option value="week">7 Hari Terakhir</option>
+              <option value="month">30 Hari Terakhir</option>
+            </select>
+          </div>
+          <div class="activity-view-toggle">
+            <button type="button" class="view-btn active" onclick="setActivityView('timeline')" title="Timeline View">
+              <i data-lucide="list"></i>
+            </button>
+            <button type="button" class="view-btn" onclick="setActivityView('compact')" title="Compact View">
+              <i data-lucide="layout-list"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Timeline Container -->
+        <div id="activityTimelineView" class="activity-timeline-container">
+          <div id="activityListBody">
+            <!-- Activity items will be populated by JavaScript -->
+          </div>
+          <div class="activity-load-more">
+            <button type="button" class="btn-secondary" onclick="loadMoreActivity()">
+              <i data-lucide="chevron-down"></i>
+              Load More
+            </button>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="activityEmptyState" class="activity-empty" style="display:none;">
+          <i data-lucide="activity"></i>
+          <h3>Tidak ada aktivitas</h3>
+          <p>Tidak ada aktivitas yang sesuai dengan filter yang dipilih.</p>
         </div>
       </div>
     </section>
