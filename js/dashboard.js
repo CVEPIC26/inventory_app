@@ -75,6 +75,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   selectPersediaanImport(null, "pembelian");
   await loadProdukOptions();
   await loadAuditOutletOptions();
+  await buildDynamicMenu();
   initOpnameQtyModal();
   selectMenu(null, getSavedMenu());
 });
