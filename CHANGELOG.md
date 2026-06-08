@@ -9,6 +9,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Activity Timeline
+- **New Activity Timeline Page** - Built comprehensive activity timeline following wireframe from `activity-timeline.md`
+  - Activity Timeline Header: Title, search bar, and refresh button
+  - Stats Cards: Total activities, today, opname, task, and approval counts
+  - Filter Bar: Type, Actor, and Date range filters with view toggle
+  - Timeline View: Chronological feed with date grouping (Today, Yesterday, 7 Hari, Lebih Lama)
+  - Activity Items: Icon, actor avatar, title, description, type badge, timestamp, and resource links
+  - Compact View: Single-line format for quick scanning
+  - Load More: Pagination button for lazy loading older activities
+
+- **Activity Types**
+  - Stok Opname (Blue) - Stock opname events
+  - Task (Purple) - Task lifecycle events
+  - Approval (Green) - Approval workflow events
+  - Penyesuaian (Amber) - Stock adjustment events
+  - Authentication (Gray) - Login/logout events
+  - Stok (Red) - General stock events
+
+- **Activity Timeline Features** (per design spec)
+  - Grouped by date with collapsible sections
+  - Actor information with avatar and name
+  - Resource links to related items (opname, task, approval)
+  - Filter by type, actor, and date range
+  - Search across title and description
+  - Timeline and compact view toggle
+
+- **Activity Timeline Functions** - Added JavaScript functions for Activity Timeline interactions
+  - `loadActivityTimeline()` - Initialize activity timeline on menu selection
+  - `renderActivityList()` - Render activity list with date grouping
+  - `updateActivityStats()` - Update activity count statistics
+  - `groupActivitiesByDate()` - Group activities by date ranges
+  - `setActivityView()` - Toggle between timeline and compact views
+  - `filterActivity()` - Filter by search, type, actor, and date
+  - `refreshActivity()` - Refresh activity data
+  - `loadMoreActivity()` - Load more activities with pagination
+
 #### Approval Center
 - **New Approval Center Page** - Built comprehensive approval center following wireframe from `approval-workflow.md`
   - Approval Center Header: Title, search bar, and type filter
@@ -177,7 +213,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Smooth transitions on all interactive elements
 
 ### Files Changed
-- `css/style.css` - Updated sidebar and header styles; Added admin, operator dashboard, Task Center, and Approval Center styles
-- `index.html` - Updated sidebar HTML structure; Added admin, operator dashboard, Task Center, and Approval Center sections; Updated auth state JavaScript
-- `js/dashboard.js` - Added admin, operator dashboard, Task Center, and Approval Center functions; Updated menu handling for role-based dashboard
+- `css/style.css` - Updated sidebar and header styles; Added admin, operator dashboard, Task Center, Approval Center, and Activity Timeline styles
+- `index.html` - Updated sidebar HTML structure; Added admin, operator dashboard, Task Center, Approval Center, and Activity Timeline sections; Updated auth state JavaScript
+- `js/dashboard.js` - Added admin, operator dashboard, Task Center, Approval Center, and Activity Timeline functions; Updated menu handling for role-based dashboard
 - `CHANGELOG.md` - Documented all changes
