@@ -47,9 +47,13 @@ def create_app():
     # Register blueprints
     register_blueprints(app)
     
-    # Create database tables
+    # Create database tables (best-effort). Some dialect types (ENUM) may not
+    # be supported by the lightweight SQLite used for local development.
     with app.app_context():
-        db.create_all()
+        try:
+            db.create_all()
+        except Exception as e:
+            app.logger.warning(f"Skipping db.create_all() due to error: {e}")
     
     # Health check
     @app.route('/api/health', methods=['GET'])
