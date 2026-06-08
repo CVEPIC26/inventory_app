@@ -99,6 +99,8 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or (
         f"sqlite:///{os.path.join(os.path.dirname(__file__), 'dev.db')}"
     )
+    # Allow all permissions in development for rapid testing
+    ALLOW_ALL_PERMISSIONS = True
 
 
 class TestingConfig(Config):
