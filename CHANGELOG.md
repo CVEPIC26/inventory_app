@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### Admin Dashboard
+- **New Admin Dashboard Page** - Built comprehensive admin dashboard following wireframe from `admin-dashboard.md`
+  - KPI Cards: Total Stock, Stock Alert, Pending Opname, Pending Approval
+  - Warehouse Health Panel: Health score, stock availability, restock risk, opname variance, data integrity indicators
+  - Pending Approvals Panel: List of pending approvals with priority, requester, age, and review action
+  - Recent Activity Timeline: Filterable activity log showing latest stock movements, opnames, approvals, and audits
+  - Refresh button to reload dashboard data
+
+- **Admin Menu Item** - Added Admin Panel menu item in sidebar (only visible for admin role)
+  - Role-based visibility (hidden for non-admin users)
+  - Icon and styling consistent with app theme
+
+- **Navigation Functions** - Added JavaScript functions for admin dashboard interactions
+  - `loadAdminDashboard()` - Initialize admin dashboard on menu selection
+  - `refreshAdminDashboard()` - Refresh KPI data
+  - `navigateToAdminSection()` - Navigate to related menu sections
+  - `filterRecentActivity()` - Filter activity timeline by type
+
 ### Changed
 
 #### Header Redesign
@@ -39,5 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Smooth transitions on all interactive elements
 
 ### Files Changed
-- `css/style.css` - Updated header and related component styles
-- `index.html` - Updated header HTML structure and auth state JavaScript
+- `css/style.css` - Updated header and related component styles; Added admin dashboard styles
+- `index.html` - Updated header HTML structure, added admin dashboard section, updated auth state JavaScript
+- `js/dashboard.js` - Added admin dashboard functions, updated menu handling for admin role
+- `CHANGELOG.md` - Documented all changes
