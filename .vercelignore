@@ -15,7 +15,5 @@ docs/
 test/
 tests/
 
-# Ignore legacy files
-scripts/*.js
-scripts/analyze-*.js
-scripts/audit-db.js
+# Ignore legacy scripts folder
+scripts/
