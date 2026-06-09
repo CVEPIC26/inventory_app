@@ -3,11 +3,44 @@
    - Loaded only in refactor branch; main stylesheet remains unchanged.
 */
 
+/* V3 Sidebar Styles */
 :root{
   --sidebar-width: 260px;
   --sidebar-collapsed-width: 72px;
   --sidebar-bg: linear-gradient(180deg, rgba(38,27,29,1) 0%, rgba(27,20,22,1) 100%);
   --sidebar-focus: 3px rgba(37,99,235,0.16);
+}
+
+/* Brand section - V3 styling */
+.sidebar-brand__tag {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.5);
+  margin: 0 0 2px 0;
+}
+
+.sidebar-brand__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.sidebar-brand__version {
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+}
+
+/* Role-based sidebar sections */
+.sidebar-role-section {
+  padding: 8px 0;
 }
 
 /* Base sidebar container */

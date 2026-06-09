@@ -101,108 +101,110 @@
       </div>
     </div>
   </section>
-  <aside class="sidebar">
+  <aside class="sidebar" id="mainSidebar">
     <div class="sidebar-brand">
       <div class="sidebar-brand__logo">
         <img src="/assets/logo.png" alt="CV EPIC Warehouse">
       </div>
       <div class="sidebar-brand__text">
-        <p class="sidebar-brand__tag">Inventory Control</p>
-        <h1 class="sidebar-brand__title">CV EPIC</h1>
+        <p class="sidebar-brand__tag">Rangkaian Kontrol Inventaris</p>
+        <h1 class="sidebar-brand__title">CV EPIC Warehouse</h1>
+        <span class="sidebar-brand__version">Versi 3</span>
       </div>
     </div>
 
-    <nav class="sidebar-nav">
-      <!-- Dashboard - Available to all roles -->
-      <div class="sidebar-section">
-        <p class="sidebar-section__label">Dashboard</p>
-        <ul>
-          <li data-menu="dashboard" onclick="selectMenu(event,'dashboard')" class="active">
-            <i data-lucide="layout-dashboard"></i>
-            <span>Dashboard</span>
-          </li>
-        </ul>
+    <nav class="sidebar-nav" id="sidebarNav">
+      <!-- ADMIN SIDEBAR -->
+      <div class="sidebar-role-section" id="adminSidebar">
+        <div class="sidebar-section">
+          <p class="sidebar-section__label">Dasbor</p>
+          <ul>
+            <li data-menu="dashboard" onclick="selectMenu(event,'dashboard')" class="active">
+              <i data-lucide="layout-dashboard"></i>
+              <span>Dasbor</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="sidebar-section">
+          <p class="sidebar-section__label">Operasional</p>
+          <ul>
+            <li data-menu="penjualan" onclick="selectMenu(event,'penjualan')">
+              <i data-lucide="shopping-cart"></i>
+              <span>Penyedia</span>
+            </li>
+            <li data-menu="opname" onclick="selectMenu(event,'opname')">
+              <i data-lucide="package-check"></i>
+              <span>Stok Opname</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="sidebar-section">
+          <p class="sidebar-section__label">Manajemen</p>
+          <ul>
+            <li data-menu="users" onclick="selectMenu(event,'users')">
+              <i data-lucide="users"></i>
+              <span>Pengguna</span>
+            </li>
+            <li data-menu="settings" onclick="selectMenu(event,'settings')">
+              <i data-lucide="settings"></i>
+              <span>Pengaturan</span>
+            </li>
+          </ul>
+        </div>
       </div>
 
-      <div class="sidebar-divider"></div>
+      <!-- USER SIDEBAR -->
+      <div class="sidebar-role-section" id="userSidebar" style="display:none;">
+        <div class="sidebar-section">
+          <p class="sidebar-section__label">Dasbor Saya</p>
+          <ul>
+            <li data-menu="mydashboard" onclick="selectMenu(event,'mydashboard')" class="active">
+              <i data-lucide="layout-dashboard"></i>
+              <span>Dasbor Saya</span>
+            </li>
+          </ul>
+        </div>
 
-      <!-- Operasional - Daily operations -->
-      <div class="sidebar-section">
-        <p class="sidebar-section__label">Operasional</p>
-        <ul>
-          <li data-menu="opname" onclick="selectMenu(event,'opname')">
-            <i data-lucide="package-check"></i>
-            <span>Stok Opname</span>
-          </li>
-          <li data-menu="persediaan" onclick="selectMenu(event,'persediaan')">
-            <i data-lucide="boxes"></i>
-            <span>Persediaan</span>
-          </li>
-          <li data-menu="taskcenter" onclick="selectMenu(event,'taskcenter')">
-            <i data-lucide="clipboard-check"></i>
-            <span>Task Center</span>
-          </li>
-          <li data-menu="approvalcenter" onclick="selectMenu(event,'approvalcenter')">
-            <i data-lucide="check-square"></i>
-            <span>Approval Center</span>
-          </li>
-        </ul>
-      </div>
+        <div class="sidebar-divider"></div>
 
-      <div class="sidebar-divider"></div>
+        <div class="sidebar-section">
+          <p class="sidebar-section__label">Tugas</p>
+          <ul>
+            <li data-menu="sotasks" onclick="selectMenu(event,'sotasks')">
+              <i data-lucide="clipboard-list"></i>
+              <span>Tugas SO</span>
+            </li>
+            <li data-menu="sohistory" onclick="selectMenu(event,'sohistory')">
+              <i data-lucide="history"></i>
+              <span>Riwayat Saya</span>
+            </li>
+          </ul>
+        </div>
 
-      <!-- Analitik - Reports and analysis -->
-      <div class="sidebar-section">
-        <p class="sidebar-section__label">Analitik</p>
-        <ul>
-          <li data-menu="penjualan" onclick="selectMenu(event,'penjualan')">
-            <i data-lucide="bar-chart-3"></i>
-            <span>Penjualan</span>
-          </li>
-          <li data-menu="forecast" onclick="selectMenu(event,'forecast')">
-            <i data-lucide="trending-up"></i>
-            <span>Forecasting</span>
-          </li>
-          <li data-menu="activity" onclick="selectMenu(event,'activity')">
-            <i data-lucide="activity"></i>
-            <span>Activity Timeline</span>
-          </li>
-        </ul>
-      </div>
+        <div class="sidebar-divider"></div>
 
-      <div class="sidebar-divider"></div>
-
-      <!-- Master Data - Admin only -->
-      <div class="sidebar-section">
-        <p class="sidebar-section__label">Master Data</p>
-        <ul>
-          <li data-menu="audit" onclick="selectMenu(event,'audit')" id="auditMenuItem">
-            <i data-lucide="shield"></i>
-            <span>Audit Center</span>
-          </li>
-          <li data-menu="reports" onclick="selectMenu(event,'reports')">
-            <i data-lucide="file-bar-chart"></i>
-            <span>Laporan</span>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Sistem - Admin only -->
-      <div class="sidebar-section" id="sistemSection" style="display:none;">
-        <p class="sidebar-section__label">Sistem</p>
-        <ul>
-          <li data-menu="admin" onclick="selectMenu(event,'admin')" id="adminMenuItem">
-            <i data-lucide="shield-check"></i>
-            <span>Admin Panel</span>
-          </li>
-        </ul>
+        <div class="sidebar-section">
+          <p class="sidebar-section__label">Akun</p>
+          <ul>
+            <li data-menu="profile" onclick="selectMenu(event,'profile')">
+              <i data-lucide="user"></i>
+              <span>Profil</span>
+            </li>
+          </ul>
+        </div>
       </div>
     </nav>
 
     <div class="sidebar-footer">
       <div class="sidebar-footer__info">
-        <i data-lucide="info"></i>
-        <span>v1.0.0</span>
+        <i data-lucide="database"></i>
+        <span id="sidebarDbStatus">Menghubungkan...</span>
       </div>
     </div>
   </aside>
@@ -275,7 +277,8 @@
     </div>
 
     <div class="tab-menu" id="salesTabMenu">
-      <button onclick="showTab(event,'kpiTab')" class="active-tab">KPI</button>
+      <button onclick="showTab(event,'v3DashboardTab')" class="active-tab">Dasbor</button>
+      <button onclick="showTab(event,'kpiTab')">KPI</button>
       <button onclick="showTab(event,'chartTab')">Grafik</button>
       <button onclick="showTab(event,'miniReviewTab')">Mini Review</button>
       <button onclick="showTab(event,'outletTransactionTab')">Transaksi Outlet</button>
@@ -283,7 +286,130 @@
       <button onclick="showTab(event,'importTab')">Import</button>
     </div>
 
-    <section id="kpiTab" class="tab-content">
+    <!-- V3 ADMIN DASHBOARD - FASE 6 -->
+    <section id="v3DashboardTab" class="tab-content">
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <p class="section-eyebrow">Dasbor Utama</p>
+            <h3>Apa yang perlu diketahui hari ini?</h3>
+          </div>
+          <div class="section-actions">
+            <span class="timestamp" id="v3DashboardTimestamp"></span>
+            <button class="btn-secondary" onclick="loadV3Dashboard()">
+              <i data-lucide="refresh-cw"></i> Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Cards Row 1: Hari Ini -->
+        <div class="kpi-grid">
+          <div class="kpi-card kpi-orange">
+            <div class="kpi-card__icon">
+              <i data-lucide="shopping-cart"></i>
+            </div>
+            <div class="kpi-card__content">
+              <p class="kpi-card__label">Penjualan Hari Ini</p>
+              <h2 class="kpi-card__value" id="v3_penjualan_hari_ini">-</h2>
+            </div>
+          </div>
+          <div class="kpi-card kpi-blue">
+            <div class="kpi-card__icon">
+              <i data-lucide="package-plus"></i>
+            </div>
+            <div class="kpi-card__content">
+              <p class="kpi-card__label">Pembelian Hari Ini</p>
+              <h2 class="kpi-card__value" id="v3_pembelian_hari_ini">-</h2>
+            </div>
+          </div>
+          <div class="kpi-card kpi-green">
+            <div class="kpi-card__icon">
+              <i data-lucide="box"></i>
+            </div>
+            <div class="kpi-card__content">
+              <p class="kpi-card__label">Produk Aktif</p>
+              <h2 class="kpi-card__value" id="v3_produk_aktif">-</h2>
+            </div>
+          </div>
+          <div class="kpi-card kpi-purple">
+            <div class="kpi-card__icon">
+              <i data-lucide="store"></i>
+            </div>
+            <div class="kpi-card__content">
+              <p class="kpi-card__label">Customer Aktif</p>
+              <h2 class="kpi-card__value" id="v3_customer_aktif">-</h2>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI Cards Row 2: Stok & SO -->
+        <div class="kpi-grid top-space">
+          <div class="kpi-card kpi-red" id="v3_stok_kritis_card">
+            <div class="kpi-card__icon">
+              <i data-lucide="alert-triangle"></i>
+            </div>
+            <div class="kpi-card__content">
+              <p class="kpi-card__label">Stok Kritis</p>
+              <h2 class="kpi-card__value" id="v3_stok_kritis">-</h2>
+            </div>
+          </div>
+          <div class="kpi-card kpi-yellow">
+            <div class="kpi-card__icon">
+              <i data-lucide="clipboard-list"></i>
+            </div>
+            <div class="kpi-card__content">
+              <p class="kpi-card__label">SO Berjalan</p>
+              <h2 class="kpi-card__value" id="v3_so_berjalan">-</h2>
+            </div>
+          </div>
+          <div class="kpi-card kpi-green">
+            <div class="kpi-card__icon">
+              <i data-lucide="check-circle"></i>
+            </div>
+            <div class="kpi-card__content">
+              <p class="kpi-card__label">SO Selesai Bulan Ini</p>
+              <h2 class="kpi-card__value" id="v3_so_selesai">-</h2>
+            </div>
+          </div>
+          <div class="kpi-card kpi-gray">
+            <div class="kpi-card__icon">
+              <i data-lucide="layers"></i>
+            </div>
+            <div class="kpi-card__content">
+              <p class="kpi-card__label">Total Produk</p>
+              <h2 class="kpi-card__value" id="v3_total_produk">-</h2>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aktivitas Terbaru -->
+        <div class="card top-space">
+          <div class="section-header">
+            <div>
+              <p class="section-eyebrow">Monitoring</p>
+              <h3>Aktivitas Terbaru</h3>
+            </div>
+          </div>
+          <div id="v3AktivitasContainer">
+            <p class="page-caption" id="v3AktivitasEmpty">Memuat aktivitas...</p>
+            <table class="data-table" id="v3AktivitasTable" style="display:none;">
+              <thead>
+                <tr>
+                  <th>Tipe</th>
+                  <th>Produk</th>
+                  <th>Qty</th>
+                  <th>Lokasi</th>
+                  <th>Waktu</th>
+                </tr>
+              </thead>
+              <tbody id="v3AktivitasBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="kpiTab" class="tab-content" style="display:none;">
       <div class="card">
         <div class="section-header">
           <div>
@@ -2435,7 +2561,26 @@
       document.getElementById('loginModal')?.removeAttribute('style');
       updateAuthHeader();
       
-      // Update sidebar sections based on role
+      // V3: Switch sidebar based on role
+      const adminSidebar = document.getElementById('adminSidebar');
+      const userSidebar = document.getElementById('userSidebar');
+      if (adminSidebar && userSidebar) {
+        if (isAdmin) {
+          adminSidebar.style.display = 'block';
+          userSidebar.style.display = 'none';
+        } else {
+          adminSidebar.style.display = 'none';
+          userSidebar.style.display = 'block';
+        }
+      }
+      
+      // Update sidebar database status indicator
+      const dbStatus = document.getElementById('sidebarDbStatus');
+      if (dbStatus) {
+        dbStatus.textContent = hasAuth ? 'Database Terhubung' : 'Menghubungkan...';
+      }
+      
+      // Legacy sidebar sections (keep for compatibility)
       const sistemSection = document.getElementById('sistemSection');
       if (sistemSection) {
         sistemSection.style.display = isAdmin ? 'block' : 'none';

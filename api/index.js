@@ -29,6 +29,12 @@ import templateStokAwalHandler from "../backend/template-stok_awal.js";
 import topOutletHandler from "../backend/top-outlet.js";
 import topProdukHandler from "../backend/top-produk.js";
 import miniReviewHandler from "../backend/mini-review.js";
+import v3DashboardHandler from "../backend/v3-dashboard.js";
+import v3PenjualanHandler from "../backend/v3-penjualan.js";
+import v3PersediaanHandler from "../backend/v3-persediaan.js";
+import v3OpnameHandler from "../backend/v3-opname.js";
+import v3OpnameDetailHandler from "../backend/v3-opname-detail.js";
+import v3ChartHandler from "../backend/v3-chart.js";
 
 const routes = {
   "POST /v1/auth/login": authHandler,
@@ -56,6 +62,15 @@ const routes = {
   "GET /audit": auditHandler,
   "GET /forecast": forecastHandler,
   "GET /produk-list": produkListHandler,
+  "GET /v3-dashboard": v3DashboardHandler,
+  "GET /v3-penjualan": v3PenjualanHandler,
+  "GET /v3-persediaan": v3PersediaanHandler,
+  "GET /v3-opname": v3OpnameHandler,
+  "POST /v3-opname": v3OpnameHandler,
+  "PUT /v3-opname": v3OpnameHandler,
+  "GET /v3-opname-detail": v3OpnameDetailHandler,
+  "POST /v3-opname-detail": v3OpnameDetailHandler,
+  "GET /v3-chart": v3ChartHandler,
   "POST /add-penjualan": addPenjualanHandler,
   "POST /add-pembelian": addPembelianHandler,
   "POST /add-stok_awal": addStokAwalHandler,

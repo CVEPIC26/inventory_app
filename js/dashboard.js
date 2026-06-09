@@ -707,7 +707,7 @@ function getQueryParams(includeProduct = true) {
 }
 
 function showTab(event, id) {
-  document.querySelectorAll("#kpiTab, #chartTab, #outletTransactionTab, #inputTab, #importTab")
+  document.querySelectorAll("#v3DashboardTab, #kpiTab, #chartTab, #miniReviewTab, #outletTransactionTab, #inputTab, #importTab")
     .forEach(tab => { tab.style.display = "none"; });
 
   document.querySelectorAll("#salesTabMenu button")
@@ -717,6 +717,9 @@ function showTab(event, id) {
   if (target) target.style.display = "block";
   if (event) event.target.classList.add("active-tab");
 
+  if (id === "v3DashboardTab") {
+    loadV3Dashboard();
+  }
   if (id === "chartTab") {
     loadChart();
   }
@@ -972,6 +975,205 @@ async function loadData() {
   } finally {
     hideLoader();
   }
+}
+
+// V3 Dashboard Loader - FASE 6
+async function loadV3Dashboard() {
+  try {
+    const data = await fetchJson('/api/v3-dashboard');
+    
+    // Update timestamps
+    if (data.generated_at) {
+      const ts = document.getElementById('v3DashboardTimestamp');
+      if (ts) ts.textContent = `Updated: ${new Date(data.generated_at).toLocaleString('id-ID')}`;
+    }
+    
+    // Update KPI cards - Today
+    setText("v3_penjualan_hari_ini", formatNumber(data.today?.penjualan || 0));
+    setText("v3_pembelian_hari_ini", formatNumber(data.today?.pembelian || 0));
+    setText("v3_customer_aktif", formatNumber(data.today?.customer_count || 0));
+    
+    // Update KPI cards - Monthly
+    setText("v3_produk_aktif", `${formatNumber(data.produk?.aktif || 0)} / ${formatNumber(data.produk?.total || 0)}`);
+    
+    // Update KPI cards - Stok & SO
+    const stokKritis = Number(data.stok?.kritis || 0);
+    setText("v3_stok_kritis", formatNumber(stokKritis));
+    
+    // Highlight if stok kritis > 0
+    const stokKritisCard = document.getElementById('v3_stok_kritis_card');
+    if (stokKritisCard) {
+      stokKritisCard.classList.toggle('kpi-alert', stokKritis > 0);
+    }
+    
+    setText("v3_so_berjalan", formatNumber(data.opname?.berjalan || 0));
+    setText("v3_so_selesai", formatNumber(data.opname?.selesai_bulan_ini || 0));
+    setText("v3_total_produk", formatNumber(data.produk?.total || 0));
+    
+    // Update Aktivitas table
+    const aktivitas = data.aktivitas || [];
+    const aktivitasTable = document.getElementById('v3AktivitasTable');
+    const aktivitasBody = document.getElementById('v3AktivitasBody');
+    const aktivitasEmpty = document.getElementById('v3AktivitasEmpty');
+    
+    if (aktivitas.length === 0) {
+      if (aktivitasTable) aktivitasTable.style.display = 'none';
+      if (aktivitasEmpty) aktivitasEmpty.textContent = 'Tidak ada aktivitas hari ini.';
+    } else {
+      if (aktivitasTable) aktivitasTable.style.display = 'table';
+      if (aktivitasEmpty) aktivitasEmpty.style.display = 'none';
+      
+      aktivitasBody.innerHTML = aktivitas.map(a => `
+        <tr>
+          <td><span class="status-badge status-${a.tipe === 'penjualan' ? 'info' : 'success'}">${a.tipe === 'penjualan' ? 'Jual' : 'Beli'}</span></td>
+          <td>${escapeHtml(a.produk || '-')}</td>
+          <td>${formatNumber(a.qty || 0)}</td>
+          <td>${escapeHtml(a.lokasi || '-')}</td>
+          <td>${a.waktu ? new Date(a.waktu).toLocaleString('id-ID') : '-'}</td>
+        </tr>
+      `).join('');
+    }
+    
+  } catch (error) {
+    console.error("V3 Dashboard load error:", error);
+    // Show empty state on error
+    setText("v3_penjualan_hari_ini", "Error");
+    setText("v3_pembelian_hari_ini", "Error");
+    setText("v3_produk_aktif", "Error");
+    setText("v3_customer_aktif", "Error");
+    setText("v3_stok_kritis", "Error");
+    setText("v3_so_berjalan", "Error");
+    setText("v3_so_selesai", "Error");
+    setText("v3_total_produk", "Error");
+    const aktivitasEmpty = document.getElementById('v3AktivitasEmpty');
+    if (aktivitasEmpty) aktivitasEmpty.textContent = 'Gagal memuat data. Periksa koneksi database.';
+  }
+}
+
+// Mobile SO Input Handler - FASE 13
+let mobileSOCurrentIndex = 0;
+let mobileSOData = [];
+
+async function openMobileSO(opnameId) {
+  try {
+    const data = await fetchJson(`/api/v3-opname-detail?opname_id=${opnameId}`);
+    
+    mobileSOData = data.produk || [];
+    mobileSOCurrentIndex = mobileSOData.findIndex(p => !p.stok_fisik || p.stok_fisik === 0);
+    if (mobileSOCurrentIndex === -1) mobileSOCurrentIndex = 0;
+    
+    showMobileSOInput();
+  } catch (error) {
+    console.error("Error loading SO data:", error);
+    showToast("Gagal memuat data SO", false);
+  }
+}
+
+function showMobileSOInput() {
+  const container = document.getElementById('mobileSOContainer');
+  if (!container || mobileSOData.length === 0) return;
+  
+  const current = mobileSOData[mobileSOCurrentIndex];
+  const progress = mobileSOData.filter(p => p.stok_fisik > 0).length;
+  const progressPercent = Math.round((progress / mobileSOData.length) * 100);
+  
+  container.innerHTML = `
+    <!-- Progress Bar -->
+    <div class="so-progress">
+      <div class="so-progress__bar">
+        <div class="so-progress__fill" style="width: ${progressPercent}%"></div>
+      </div>
+      <span class="so-progress__text">${progress}/${mobileSOData.length} (${progressPercent}%)</span>
+    </div>
+    
+    <!-- Input Form -->
+    <div class="so-mobile-input">
+      <div class="so-mobile-input__header">
+        <div>
+          <p class="so-mobile-input__produk">${escapeHtml(current.nama_produk)}</p>
+          <p class="so-mobile-input__sku">${escapeHtml(current.sku)}</p>
+        </div>
+        <span class="status-badge status-${current.kategori === 'modul' ? 'info' : 'default'}">${escapeHtml(current.kategori)}</span>
+      </div>
+      
+      <div class="so-mobile-input__stok-info">
+        <div class="so-mobile-input__stok-item">
+          <p class="so-mobile-input__stok-label">Stok Sistem</p>
+          <p class="so-mobile-input__stok-value">${formatNumber(current.stok_sistem || 0)}</p>
+        </div>
+        <div class="so-mobile-input__stok-item">
+          <p class="so-mobile-input__stok-label">Stok Fisik</p>
+          <p class="so-mobile-input__stok-value">${formatNumber(current.stok_fisik || 0)}</p>
+        </div>
+      </div>
+      
+      <div class="so-mobile-input__field">
+        <label for="mobileStokFisik">Qty Fisik:</label>
+        <input type="number" id="mobileStokFisik" placeholder="0" value="${current.stok_fisik || ''}" min="0">
+      </div>
+      
+      <div class="so-mobile-input__actions">
+        <button class="so-mobile-input__skip" onclick="skipMobileSO()">Skip</button>
+        <button class="so-mobile-input__submit" onclick="submitMobileSO('${current.sku}')">Simpan</button>
+      </div>
+    </div>
+  `;
+  
+  // Focus on input
+  setTimeout(() => {
+    const input = document.getElementById('mobileStokFisik');
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }, 100);
+}
+
+async function submitMobileSO(sku) {
+  const input = document.getElementById('mobileStokFisik');
+  if (!input) return;
+  
+  const qty = Number(input.value) || 0;
+  const current = mobileSOData[mobileSOCurrentIndex];
+  
+  try {
+    const res = await fetch('/api/v3-opname-detail', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        opname_id: current.detail_id ? current.detail_id.split('/')[0] : 0,
+        sku: sku,
+        stok_fisik: qty
+      })
+    });
+    
+    if (!res.ok) throw new Error('Save failed');
+    
+    // Update local data
+    mobileSOData[mobileSOCurrentIndex].stok_fisik = qty;
+    
+    showToast(`Qty fisik untuk ${sku} disimpan`, true);
+    
+    // Move to next
+    moveToNextSOItem();
+    
+  } catch (error) {
+    console.error("Error saving SO:", error);
+    showToast("Gagal menyimpan qty fisik", false);
+  }
+}
+
+function skipMobileSO() {
+  moveToNextSOItem();
+}
+
+function moveToNextSOItem() {
+  mobileSOCurrentIndex++;
+  if (mobileSOCurrentIndex >= mobileSOData.length) {
+    mobileSOCurrentIndex = 0;
+    showToast("Semua produk sudah diinput", true);
+  }
+  showMobileSOInput();
 }
 
 async function loadOutletTransactionMonitor(showSpinner = true) {
@@ -3455,8 +3657,8 @@ function loadAdminDashboard() {
     adminMenuItem.style.display = isAdmin ? 'flex' : 'none';
   }
 
-  // Load mock data for admin dashboard
-  populateMockAdminKPI();
+  // Load real data from V3 Dashboard API
+  loadV3AdminDashboard();
   
   // Initialize Lucide icons
   if (window.lucide) {
@@ -3464,29 +3666,36 @@ function loadAdminDashboard() {
   }
 }
 
-function populateMockAdminKPI() {
-  // Simulate KPI data loading
-  const mockData = {
-    totalStock: 12450,
-    stockAlert: 23,
-    pendingOpname: 5,
-    pendingApproval: 2
-  };
-
-  document.getElementById("admin_total_stock").textContent = mockData.totalStock.toLocaleString("id-ID");
-  document.getElementById("admin_stock_alert").textContent = mockData.stockAlert;
-  document.getElementById("admin_pending_opname").textContent = mockData.pendingOpname;
-  document.getElementById("admin_pending_approval").textContent = mockData.pendingApproval;
-  document.getElementById("approvalCount").textContent = `${mockData.pendingApproval} pending`;
+async function loadV3AdminDashboard() {
+  try {
+    const data = await fetchJson('/api/v3-dashboard');
+    
+    // Update admin KPI elements if they exist
+    const totalStock = document.getElementById("admin_total_stock");
+    const stockAlert = document.getElementById("admin_stock_alert");
+    const pendingOpname = document.getElementById("admin_pending_opname");
+    const pendingApproval = document.getElementById("admin_pending_approval");
+    const approvalCount = document.getElementById("approvalCount");
+    
+    if (totalStock) totalStock.textContent = formatNumber(data.produk?.total || 0);
+    if (stockAlert) stockAlert.textContent = formatNumber(data.stok?.kritis || 0);
+    if (pendingOpname) pendingOpname.textContent = formatNumber(data.opname?.berjalan || 0);
+    if (pendingApproval) pendingApproval.textContent = formatNumber(data.opname?.selesai_bulan_ini || 0);
+    if (approvalCount) approvalCount.textContent = `${data.opname?.selesai_bulan_ini || 0} bulan ini`;
+    
+  } catch (error) {
+    console.warn("Could not load V3 admin dashboard:", error);
+    const elements = ['admin_total_stock', 'admin_stock_alert', 'admin_pending_opname', 'admin_pending_approval'];
+    elements.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = '-';
+    });
+  }
 }
 
 function refreshAdminDashboard() {
   showToast("Memuat ulang data admin dashboard...", true);
-  
-  // Reload KPI data
-  populateMockAdminKPI();
-  
-  // Simulate reload
+  loadV3AdminDashboard();
   setTimeout(() => {
     showToast("Data admin dashboard telah diperbarui", true);
     if (window.lucide) {
