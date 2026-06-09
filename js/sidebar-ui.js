@@ -26,7 +26,6 @@
   function openMobileMenu(){
     document.body.classList.add('sidebar-open');
     document.querySelectorAll('.sidebar').forEach(s => s.classList.add('sidebar--open'));
-    // set focus to first menu item
     const first = document.querySelector('.sidebar li');
     first?.focus?.();
   }
@@ -39,6 +38,28 @@
   function toggleMobileMenu(){
     if (document.body.classList.contains('sidebar-open')) closeMobileMenu();
     else openMobileMenu();
+  }
+
+  // Switch sidebar based on user role (V3 spec)
+  function switchSidebarByRole(role) {
+    const adminSidebar = document.getElementById('adminSidebar');
+    const userSidebar = document.getElementById('userSidebar');
+    const dbStatus = document.getElementById('sidebarDbStatus');
+    
+    if (!adminSidebar || !userSidebar) return;
+    
+    if (role === 'admin') {
+      adminSidebar.style.display = 'block';
+      userSidebar.style.display = 'none';
+    } else {
+      adminSidebar.style.display = 'none';
+      userSidebar.style.display = 'block';
+    }
+    
+    // Update database status indicator
+    if (dbStatus) {
+      dbStatus.textContent = 'Database Terhubung';
+    }
   }
 
   // Build sidebar from existing markup or from allowed menus. Uses existing canAccessMenu() and getAllowedMenus()
@@ -130,6 +151,19 @@
       collapseBtn.onkeydown = (e)=>{ if(e.key==='Enter') toggleSidebarCollapse(); };
       document.querySelector('.sidebar .logo')?.appendChild(collapseBtn);
       if (window.lucide) window.lucide.createIcons();
+      
+      // Initialize sidebar based on current auth state
+      const storedAuth = window.localStorage.getItem('auth_user');
+      if (storedAuth) {
+        try {
+          const auth = JSON.parse(storedAuth);
+          if (auth?.role) {
+            switchSidebarByRole(auth.role);
+          }
+        } catch (e) {
+          console.warn('Could not parse auth for sidebar switch', e);
+        }
+      }
     } catch (err) {
       console.error('sidebar-ui init error', err);
     }
@@ -141,5 +175,6 @@
   window.closeMobileMenu = closeMobileMenu;
   window.toggleMobileMenu = toggleMobileMenu;
   window.buildSidebarMenu = buildSidebarMenu;
+  window.switchSidebarByRole = switchSidebarByRole;
 
 })(window);

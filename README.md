@@ -246,3 +246,69 @@ inventory_app/
 - Frontend: HTML, CSS, JavaScript, Chart.js
 - Backend: Node.js, Express
 - Database: PostgreSQL
+
+---
+
+## 🚀 V3 - Inventory Control Suite
+
+**Versi**: 3.0.0  
+**Tanggal**: 2026-06-09  
+**Database**: Neon PostgreSQL (neondb)
+
+### API Endpoints V3
+
+| Endpoint | Fungsi |
+|----------|--------|
+| `/api/v3-dashboard` | Dashboard utama dengan KPI |
+| `/api/v3-penjualan` | Analisis penjualan per kategori/level |
+| `/api/v3-persediaan` | Stok gudang dengan rolling stock |
+| `/api/v3-opname` | Manajemen perintah Stock Opname |
+| `/api/v3-opname-detail` | Input qty fisik untuk SO |
+| `/api/v3-chart` | Data chart untuk visualisasi |
+
+### Data Real
+
+| Metric | Value |
+|--------|-------|
+| Total Penjualan Bulan Ini | 17,604 unit |
+| Produk Terjual | 67 / 99 |
+| Customer Aktif | 179 / 319 outlet |
+| Stok Gudang | 16,162 unit |
+| Stok Kritis | 54 produk |
+
+### Kategori Produk
+
+| Kategori | Pattern | Jumlah |
+|----------|---------|--------|
+| MODUL | nama_produk LIKE 'MODUL%' | 25 |
+| TAS | nama_produk LIKE 'TAS%' | 1 |
+| SERAGAM | Biru/Kuning/Merah | 32 |
+| LAIN-LAIN | Default | 41 |
+
+### Level Modul
+
+- **Modul Membaca**: Level 1, 2, 3
+- **Modul Expro MD**: Level 1, 2, 3, 4
+- **Modul Expro PU**: Level 1, 2
+
+### Formula Stok Rolling
+
+```
+STOK_AKHIR = STOK_AWAL + PEMBELIAN - PENJUALAN + PENYESUAIAN
+```
+
+### Deploy Vercel
+
+```bash
+vercel --prod
+```
+
+Environment Variables untuk Vercel:
+- `DATABASE_URL`: Connection string untuk Neon PostgreSQL
+
+### User Roles
+
+| Role | Akses |
+|------|-------|
+| **admin** | Full access - Dashboard, Penyedia, SO, Pengguna, Pengaturan |
+| **checker_opname** | Terbatas - Dasbor Saya, Tugas SO, Riwayat Saya, Profil |
