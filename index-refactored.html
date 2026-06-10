@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CV EPIC Warehouse</title>
+  <!-- Design System CSS - New V3 Design -->
+  <link rel="stylesheet" href="/css/design-system.css?v=v3-20260610">
+  <!-- Legacy styles for compatibility -->
+  <link rel="stylesheet" href="/css/style.css?v=v3-20260610">
+  <link rel="icon" type="image/png" href="/assets/logo.png">
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="mainSidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand__logo">
+          <img src="/assets/logo.png" alt="CV EPIC Warehouse">
+        </div>
+        <div class="sidebar-brand__text">
+          <p class="sidebar-brand__tag">Rangkaian Kontrol Inventaris</p>
+          <h1 class="sidebar-brand__title">CV EPIC Warehouse</h1>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" id="sidebarNav">
+        <!-- Admin Sidebar -->
+        <div class="sidebar-role-section" id="adminSidebar">
+          <div class="sidebar-section">
+            <p class="sidebar-section__label">Dasbor</p>
+            <ul>
+              <li data-route="/dashboard" class="active">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="sidebar-divider"></div>
+
+          <div class="sidebar-section">
+            <p class="sidebar-section__label">Operasional</p>
+            <ul>
+              <li data-route="/sales">
+                <i data-lucide="shopping-cart"></i>
+                <span>Penjualan</span>
+              </li>
+              <li data-route="/inventory">
+                <i data-lucide="boxes"></i>
+                <span>Persediaan</span>
+              </li>
+              <li data-route="/forecast">
+                <i data-lucide="trending-up"></i>
+                <span>Forecasting</span>
+              </li>
+              <li data-route="/stock-opname">
+                <i data-lucide="package-check"></i>
+                <span>Stok Opname</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="sidebar-divider"></div>
+
+          <div class="sidebar-section">
+            <p class="sidebar-section__label">Manajemen</p>
+            <ul>
+              <li data-route="/users">
+                <i data-lucide="users"></i>
+                <span>Pengguna</span>
+              </li>
+              <li data-route="/settings">
+                <i data-lucide="settings"></i>
+                <span>Pengaturan</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- User Sidebar -->
+        <div class="sidebar-role-section" id="userSidebar" style="display: none;">
+          <div class="sidebar-section">
+            <p class="sidebar-section__label">Dasbor Saya</p>
+            <ul>
+              <li data-route="/dashboard" class="active">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="sidebar-divider"></div>
+
+          <div class="sidebar-section">
+            <p class="sidebar-section__label">Tugas</p>
+            <ul>
+              <li data-route="/stock-opname">
+                <i data-lucide="clipboard-list"></i>
+                <span>Stok Opname</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="sidebar-divider"></div>
+
+          <div class="sidebar-section">
+            <p class="sidebar-section__label">Akun</p>
+            <ul>
+              <li data-route="/settings">
+                <i data-lucide="user"></i>
+                <span>Profil</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-footer__status">
+          <span class="indicator" id="dbIndicator"></span>
+          <span id="dbStatus">Connecting...</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="app-header">
+        <div class="header-left">
+          <button class="mobile-menu-toggle" type="button" onclick="toggleMobileMenu()" aria-label="Buka menu" style="display: none;">
+            <i data-lucide="menu"></i>
+          </button>
+          <div class="brand">
+            <span class="brand-accent"></span>
+            <span class="brand-text">CV EPIC Warehouse</span>
+          </div>
+        </div>
+        
+        <div class="header-center">
+          <div class="header-datetime">
+            <span class="date" id="headerDate">-</span>
+            <span class="time" id="headerTime">-</span>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <!-- Theme Toggle -->
+          <button type="button" class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme">
+            <i data-lucide="sun" class="theme-icon-light"></i>
+            <i data-lucide="moon" class="theme-icon-dark"></i>
+          </button>
+          
+          <div id="authUserBadge" class="header-user" style="display: none;">
+            <div class="avatar" id="userAvatar">-</div>
+            <div class="info">
+              <span class="name" id="userName">-</span>
+              <span class="role" id="userRole">-</span>
+            </div>
+          </div>
+          
+          <button id="logoutButton" class="btn btn-secondary btn-sm" onclick="performLogout()" style="display: none;">
+            <i data-lucide="log-out"></i>
+            <span>Keluar</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Content Area -->
+      <div class="content-area">
+        <!-- Login Modal -->
+        <section id="loginModal" class="auth-gate" aria-label="Login dashboard">
+          <div class="auth-gate__shell">
+            <div class="auth-hero-panel">
+              <div class="auth-brand-mark">
+                <img src="/assets/logo.png" alt="CV EPIC Warehouse">
+                <div>
+                  <p>Inventory Control Suite</p>
+                  <h1>CV EPIC Warehouse</h1>
+                </div>
+              </div>
+              <div class="auth-hero-copy">
+                <h2>Masuk untuk mengelola stok, opname, dan persediaan warehouse.</h2>
+                <p>Dashboard dikunci sampai sesi user aktif agar data operasional tetap aman dan setiap akses mengikuti role.</p>
+              </div>
+              <div class="auth-capability-grid">
+                <div>
+                  <strong>Sales</strong>
+                  <span>Monitoring penjualan dan outlet.</span>
+                </div>
+                <div>
+                  <strong>Stock</strong>
+                  <span>Kontrol persediaan warehouse.</span>
+                </div>
+                <div>
+                  <strong>Opname</strong>
+                  <span>Input dan sesuaikan hasil SO.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="auth-login-card">
+              <p class="section-eyebrow">Secure Access</p>
+              <h3>Masuk ke Dashboard</h3>
+              <p class="page-caption" id="loginModeCaption">Pilih akses user untuk operasional atau admin untuk pengaturan penuh.</p>
+              <div class="login-mode-tabs" role="tablist" aria-label="Pilihan akses login">
+                <button type="button" id="loginModeUser" class="active-tab" onclick="setLoginMode('user')">
+                  <i data-lucide="user-check"></i>
+                  User Operasional
+                </button>
+                <button type="button" id="loginModeAdmin" onclick="setLoginMode('admin')">
+                  <i data-lucide="shield-check"></i>
+                  Admin
+                </button>
+              </div>
+              <div class="auth-mode-note">Gunakan akun sesuai role. User operasional diarahkan ke menu Stok Opname.</div>
+              <label class="form-group">
+                <span class="form-label">Username</span>
+                <input type="text" class="form-input" id="loginUsername" placeholder="Username" autocomplete="username">
+              </label>
+              <label class="form-group">
+                <span class="form-label">Password</span>
+                <input type="password" class="form-input" id="loginPassword" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter'){event.preventDefault();performLogin();}">
+              </label>
+              <div class="login-actions">
+                <button class="btn btn-primary" onclick="performLogin()">Masuk</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Main Content - Dynamic -->
+        <div id="mainContent">
+          <!-- Content loaded by router.js -->
+        </div>
+      </div>
+    </main>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="closeMobileMenu()">
+      <div class="mobile-menu-panel" onclick="event.stopPropagation()">
+        <!-- Mobile menu content -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Chart.js for Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Scripts -->
+  <script src="/js/sidebar-ui.js?v=v3-20260610"></script>
+  <script src="/js/router.js?v=v3-20260610"></script>
+  <script src="/js/user-management.js?v=v3-20260610"></script>
+
+  <script>
+    // Initialize
+    lucide.createIcons();
+
+    let loginMode = 'user';
+
+    function setLoginMode(mode) {
+      loginMode = mode === 'admin' ? 'admin' : 'user';
+      document.getElementById('loginModeUser')?.classList.toggle('active-tab', loginMode === 'user');
+      document.getElementById('loginModeAdmin')?.classList.toggle('active-tab', loginMode === 'admin');
+      const caption = document.getElementById('loginModeCaption');
+      if (caption) {
+        caption.textContent = loginMode === 'admin'
+          ? 'Login admin khusus untuk pengaturan penuh dan kontrol semua modul.'
+          : 'Login user operasional untuk staff gudang/checker sesuai role masing-masing.';
+      }
+    }
+
+    // Auth functions
+    function getStoredAuth() {
+      try {
+        return JSON.parse(window.localStorage.getItem('auth_user') || 'null');
+      } catch {
+        return null;
+      }
+    }
+
+    function isAuthenticated() {
+      return Boolean(getStoredAuth()?.access_token);
+    }
+
+    function getCurrentUserRole() {
+      return getStoredAuth()?.role || null;
+    }
+
+    function updateAuthHeader() {
+      const auth = getStoredAuth();
+      const userInfo = document.getElementById('authUserBadge');
+      const userAvatar = document.getElementById('userAvatar');
+      const userName = document.getElementById('userName');
+      const userRole = document.getElementById('userRole');
+      const logoutButton = document.getElementById('logoutButton');
+      const loginModal = document.getElementById('loginModal');
+
+      if (auth?.access_token) {
+        const roleLabel = auth.role === 'admin' ? 'Admin' : 'User';
+        const displayName = auth.nama_lengkap || auth.username || 'User';
+        const initial = displayName.charAt(0).toUpperCase();
+        
+        if (userInfo) userInfo.style.display = 'flex';
+        if (userAvatar) userAvatar.textContent = initial;
+        if (userName) userName.textContent = displayName;
+        if (userRole) userRole.textContent = roleLabel;
+        if (logoutButton) logoutButton.style.display = 'inline-flex';
+        if (loginModal) loginModal.style.display = 'none';
+        
+        switchSidebarByRole(auth.role);
+        updateDbStatus(true);
+      } else {
+        if (userInfo) userInfo.style.display = 'none';
+        if (logoutButton) logoutButton.style.display = 'none';
+        if (loginModal) loginModal.style.display = 'flex';
+        updateDbStatus(false);
+      }
+    }
+
+    function updateDbStatus(connected) {
+      const indicator = document.getElementById('dbIndicator');
+      const status = document.getElementById('dbStatus');
+      if (indicator) indicator.classList.toggle('disconnected', !connected);
+      if (status) status.textContent = connected ? 'Connected' : 'Disconnected';
+    }
+
+    function switchSidebarByRole(role) {
+      const adminSidebar = document.getElementById('adminSidebar');
+      const userSidebar = document.getElementById('userSidebar');
+      
+      if (adminSidebar && userSidebar) {
+        if (role === 'admin') {
+          adminSidebar.style.display = 'block';
+          userSidebar.style.display = 'none';
+        } else {
+          adminSidebar.style.display = 'none';
+          userSidebar.style.display = 'block';
+        }
+      }
+    }
+
+    async function performLogin() {
+      const user = document.getElementById('loginUsername')?.value.trim();
+      const pass = document.getElementById('loginPassword')?.value;
+      
+      if (!user || !pass) {
+        showToast('Masukkan username dan password', 'error');
+        return;
+      }
+
+      const endpoint = loginMode === 'admin' ? '/api/v1/auth/login/admin' : '/api/v1/auth/login/user';
+      
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user, password: pass })
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+          showToast(data.message || 'Login gagal', 'error');
+          return;
+        }
+
+        const authData = data.data || data;
+        window.localStorage.setItem('auth_user', JSON.stringify(authData));
+        document.getElementById('loginPassword').value = '';
+        
+        updateAuthHeader();
+        showToast(`Login berhasil sebagai ${loginMode}`, 'success');
+        
+        navigate('/dashboard');
+        
+      } catch (err) {
+        console.error(err);
+        showToast('Gagal menghubungi server auth', 'error');
+      }
+    }
+
+    async function performLogout() {
+      const auth = getStoredAuth();
+      try {
+        if (auth?.access_token) {
+          await fetch('/api/v1/auth/logout', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${auth.access_token}` }
+          });
+        }
+      } catch (err) {
+        console.warn('Logout server gagal', err);
+      } finally {
+        window.localStorage.removeItem('auth_user');
+        updateAuthHeader();
+        showToast('Anda sudah keluar', 'success');
+      }
+    }
+
+    // Theme
+    const THEME_STORAGE_KEY = 'inventoryTheme';
+    
+    function initTheme() {
+      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
+    }
+
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      setTheme(currentTheme === 'light' ? 'dark' : 'light');
+      showToast(`Theme switched to ${document.documentElement.getAttribute('data-theme') || 'dark'} mode`, 'info');
+    }
+
+    function setTheme(theme) {
+      if (theme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+      }
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+      lucide.createIcons();
+    }
+
+    // Header datetime
+    function updateHeaderDatetime() {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      
+      const dateEl = document.getElementById('headerDate');
+      const timeEl = document.getElementById('headerTime');
+      if (dateEl) dateEl.textContent = dateStr;
+      if (timeEl) timeEl.textContent = timeStr;
+    }
+
+    // Mobile menu
+    let isMobileMenuOpen = false;
+
+    function toggleMobileMenu() {
+      const sidebar = document.getElementById('mainSidebar');
+      isMobileMenuOpen = !isMobileMenuOpen;
+      sidebar?.classList.toggle('open', isMobileMenuOpen);
+    }
+
+    function closeMobileMenu() {
+      const sidebar = document.getElementById('mainSidebar');
+      isMobileMenuOpen = false;
+      sidebar?.classList.remove('open');
+    }
+
+    // Responsive
+    function handleResize() {
+      const toggle = document.querySelector('.mobile-menu-toggle');
+      if (window.innerWidth < 768) {
+        if (toggle) toggle.style.display = 'flex';
+      } else {
+        if (toggle) toggle.style.display = 'none';
+        closeMobileMenu();
+      }
+    }
+
+    window.addEventListener('resize', handleResize);
+
+    // Toast notification
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer') || (() => {
+        const c = document.createElement('div');
+        c.id = 'toastContainer';
+        c.className = 'toast-container';
+        document.body.appendChild(c);
+        return c;
+      })();
+      
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      
+      const icons = { success: 'check-circle', error: 'alert-circle', warning: 'alert-triangle', info: 'info' };
+      toast.innerHTML = `
+        <i data-lucide="${icons[type] || 'info'}"></i>
+        <span>${message}</span>
+      `;
+      
+      container.appendChild(toast);
+      lucide.createIcons();
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Init on load
+    document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      updateHeaderDatetime();
+      setInterval(updateHeaderDatetime, 1000);
+      updateAuthHeader();
+      handleResize();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
