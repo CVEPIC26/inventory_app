@@ -5,9 +5,9 @@ let chartOutletStatus = null;
 let currentMenu = "penjualan";
 let selectedSalesOutlet = "";
 const MENU_STORAGE_KEY = "inventoryActiveMenu";
-const VALID_MENUS = ["dashboard", "admin", "penjualan", "persediaan", "forecast", "opname", "taskcenter", "approvalcenter", "activity", "audit", "reports"];
-const USER_ONLY_MENUS = ["opname"];
-const ADMIN_MENUS = ["dashboard", "admin", "penjualan", "persediaan", "forecast", "opname", "taskcenter", "approvalcenter", "activity", "audit", "reports"];
+const VALID_MENUS = ["dashboard", "admin", "penjualan", "persediaan", "forecast", "opname", "taskcenter", "approvalcenter", "activity", "audit", "reports", "mydashboard", "sotasks", "sohistory", "profile", "users", "settings"];
+const USER_ONLY_MENUS = ["opname", "mydashboard", "sotasks", "sohistory", "profile"];
+const ADMIN_MENUS = ["dashboard", "admin", "penjualan", "persediaan", "forecast", "opname", "taskcenter", "approvalcenter", "activity", "audit", "reports", "users", "settings"];
 let isMobileMenuOpen = false;
 
 // Chart management - prevent memory leaks
@@ -926,6 +926,47 @@ function selectMenu(event, menu) {
   if (menu === "reports") {
     document.getElementById("reportsTab").style.display = "block";
     loadReportsPage();
+  }
+
+  // User-specific menus
+  if (menu === "mydashboard") {
+    // Show user dashboard - reuse operator dashboard logic
+    document.getElementById("operatorTab").style.display = "block";
+    loadOperatorDashboard();
+    return;
+  }
+
+  if (menu === "sotasks") {
+    // User tasks - show opname commands assigned to user
+    document.getElementById("taskcenterTab").style.display = "block";
+    loadTaskCenter();
+    return;
+  }
+
+  if (menu === "sohistory") {
+    // User history - show opname history
+    document.getElementById("approvalcenterTab").style.display = "block";
+    loadApprovalCenter();
+    return;
+  }
+
+  if (menu === "profile") {
+    // User profile - show placeholder for now
+    showToast('Profil user - dalam pengembangan', true);
+    return;
+  }
+
+  // Admin-only menus
+  if (menu === "users") {
+    // User management - placeholder for now
+    showToast('Manajemen User - dalam pengembangan', true);
+    return;
+  }
+
+  if (menu === "settings") {
+    // Settings - placeholder for now
+    showToast('Pengaturan - dalam pengembangan', true);
+    return;
   }
 }
 
