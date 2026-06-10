@@ -37,6 +37,7 @@ import v3OpnameDetailHandler from "../backend/v3-opname-detail.js";
 import v3ChartHandler from "../backend/v3-chart.js";
 import usersApiHandler from "../backend/users-api.js";
 import approvalApiHandler from "../backend/approval-api.js";
+import settingsApiHandler from "../backend/settings-api.js";
 
 const routes = {
   // Auth routes
@@ -64,6 +65,14 @@ const routes = {
   "POST /v1/approvals/:id/approve": approvalApiHandler,
   "POST /v1/approvals/:id/reject": approvalApiHandler,
   "POST /v1/approvals/:id/recount": approvalApiHandler,
+
+  // Settings and Profile routes
+  "GET /v1/auth/me": settingsApiHandler,
+  "PUT /v1/users/profile": settingsApiHandler,
+  "POST /v1/auth/change-password": settingsApiHandler,
+  "GET /v1/settings/system": settingsApiHandler,
+  "GET /v1/settings/database": settingsApiHandler,
+  "GET /v1/audit/logs": settingsApiHandler,
 
   // KPI and Dashboard routes
   "GET /kpi": kpiHandler,

@@ -965,9 +965,28 @@ function selectMenu(event, menu) {
   }
 
   if (menu === "settings") {
-    // Settings - show placeholder, redirect to users for now
-    showToast('Pengaturan - gunakan menu Pengguna untuk manajemen user', true);
+    // Settings - load settings page
+    showSettingsTab();
     return;
+  }
+}
+
+// Show settings tab
+function showSettingsTab() {
+  hideAllTabs();
+  hideAllSubmenus();
+  
+  const settingsTab = document.getElementById('settingsTab');
+  if (settingsTab) {
+    settingsTab.style.display = 'block';
+  }
+  
+  currentMenu = "settings";
+  updateActiveMenuItem("settings");
+  
+  // Initialize settings page if function exists
+  if (typeof initSettingsPage === 'function') {
+    initSettingsPage();
   }
 }
 
@@ -6162,3 +6181,208 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fun
     setTheme(e.matches ? 'dark' : 'light');
   }
 });
+
+/* ============================================
+   Settings Page Functions
+   ============================================ */
+
+// Load profile data
+async function loadSettingsProfile() {
+  const token = localStorage.getItem('access_token');
+  if (!token) return;
+
+  try {
+    const response = await fetch('/api/v1/auth/me', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await response.json();
+
+    if (data.success && data.data) {
+      document.getElementById('profileName').value = data.data.nama_lengkap || '';
+      document.getElementById('profileUsername').value = data.data.username || '';
+      document.getElementById('profileEmail').value = data.data.email || '';
+      document.getElementById('profileRole').value = data.data.role || '';
+    }
+  } catch (error) {
+    console.error('Failed to load profile:', error);
+  }
+}
+
+// Update profile
+async function updateProfile() {
+  const token = localStorage.getItem('access_token');
+  if (!token) {
+    showToast('Silakan login terlebih dahulu', false);
+    return;
+  }
+
+  const nama_lengkap = document.getElementById('profileName')?.value;
+  const email = document.getElementById('profileEmail')?.value;
+
+  if (!nama_lengkap && !email) {
+    showToast('Tidak ada data yang diperbarui', false);
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/v1/users/profile', {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ nama_lengkap, email })
+    });
+    const data = await response.json();
+
+    if (data.success) {
+      showToast('Profil berhasil diperbarui', true);
+      loadSettingsProfile();
+    } else {
+      showToast(data.message || 'Gagal memperbarui profil', false);
+    }
+  } catch (error) {
+    console.error('Failed to update profile:', error);
+    showToast('Terjadi kesalahan saat memperbarui profil', false);
+  }
+}
+
+// Change password
+async function changePassword() {
+  const token = localStorage.getItem('access_token');
+  if (!token) {
+    showToast('Silakan login terlebih dahulu', false);
+    return;
+  }
+
+  const oldPassword = document.getElementById('oldPassword')?.value;
+  const newPassword = document.getElementById('newPassword')?.value;
+  const confirmPassword = document.getElementById('confirmPassword')?.value;
+
+  if (!oldPassword || !newPassword) {
+    showToast('Password lama dan baru wajib diisi', false);
+    return;
+  }
+
+  if (newPassword.length < 8) {
+    showToast('Password minimal 8 karakter', false);
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    showToast('Password baru tidak cocok', false);
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/v1/auth/change-password', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ old_password: oldPassword, new_password: newPassword })
+    });
+    const data = await response.json();
+
+    if (data.success) {
+      showToast('Password berhasil diubah', true);
+      document.getElementById('oldPassword').value = '';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('confirmPassword').value = '';
+    } else {
+      showToast(data.message || 'Gagal mengubah password', false);
+    }
+  } catch (error) {
+    console.error('Failed to change password:', error);
+    showToast('Terjadi kesalahan saat mengubah password', false);
+  }
+}
+
+// Load database status
+async function loadDatabaseStatus() {
+  const token = localStorage.getItem('access_token');
+  if (!token) return;
+
+  const container = document.getElementById('databaseStatusContent');
+  if (!container) return;
+
+  try {
+    const response = await fetch('/api/v1/settings/database', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await response.json();
+
+    if (data.success && data.data) {
+      const counts = data.data.table_counts;
+      container.innerHTML = `
+        <div class="settings-status-item">
+          <span class="settings-status-label">Status</span>
+          <span class="settings-status-value settings-status-value--success">Connected</span>
+        </div>
+        <div class="settings-status-item">
+          <span class="settings-status-label">Host</span>
+          <span class="settings-status-value">${data.data.host}</span>
+        </div>
+        <div class="settings-status-item">
+          <span class="settings-status-label">Users</span>
+          <span class="settings-status-value">${counts?.users_count || 0} records</span>
+        </div>
+        <div class="settings-status-item">
+          <span class="settings-status-label">Outlets</span>
+          <span class="settings-status-value">${counts?.outlets_count || 0} records</span>
+        </div>
+        <div class="settings-status-item">
+          <span class="settings-status-label">Products</span>
+          <span class="settings-status-value">${counts?.produk_count || 0} records</span>
+        </div>
+        <div class="settings-status-item">
+          <span class="settings-status-label">Sales</span>
+          <span class="settings-status-value">${counts?.penjualan_count || 0} records</span>
+        </div>
+        <div class="settings-status-item">
+          <span class="settings-status-label">Opname Commands</span>
+          <span class="settings-status-value">${counts?.opname_count || 0} records</span>
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('Failed to load database status:', error);
+    container.innerHTML = '<div class="settings-error">Gagal memuat status database</div>';
+  }
+}
+
+// Initialize settings navigation
+function initSettingsNav() {
+  const navItems = document.querySelectorAll('.settings-nav__item');
+  navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const section = item.dataset.section;
+      
+      // Update active state
+      navItems.forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+      
+      // Show/hide sections
+      document.querySelectorAll('.settings-section').forEach(s => {
+        s.style.display = 'none';
+      });
+      
+      const targetSection = document.getElementById(`settings${section.charAt(0).toUpperCase() + section.slice(1)}`);
+      if (targetSection) {
+        targetSection.style.display = 'block';
+      }
+
+      // Load database status when database tab is clicked
+      if (section === 'database') {
+        loadDatabaseStatus();
+      }
+    });
+  });
+}
+
+// Initialize settings page
+function initSettingsPage() {
+  loadSettingsProfile();
+  initSettingsNav();
+}
