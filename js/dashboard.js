@@ -4587,21 +4587,84 @@ const mockApprovals = [
 let currentApprovalFilter = 'pending';
 
 function loadApprovalCenter() {
-  renderApprovalList();
-  updateApprovalStats();
+  const token = localStorage.getItem('access_token');
+  
+  if (!token) {
+    showToast('Silakan login untuk melihat approval', false);
+    return;
+  }
+
+  fetch('/api/v1/approvals', {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      realApprovals = data.data || [];
+      if (typeof updateApprovalStats === 'function' && data.stats) {
+        updateApprovalStatsFromData(data.stats);
+      }
+      renderApprovalList(realApprovals);
+    } else {
+      showToast(data.message || 'Gagal memuat data approval', false);
+      renderApprovalList([]);
+    }
+  })
+  .catch(err => {
+    console.error('Error loading approvals:', err);
+    showToast('Terjadi kesalahan saat memuat data', false);
+    renderApprovalList([]);
+  });
 }
 
-function renderApprovalList(filteredApprovals = mockApprovals) {
+// Store real approvals from API
+let realApprovals = [];
+
+// Update approval stats from API data
+function updateApprovalStatsFromData(stats) {
+  const elements = {
+    total: 'approvalCountTotal',
+    pending: 'approvalCountTotal',
+    urgent: 'approvalCountUrgent',
+    opname: 'approvalCountOpname',
+    adjustment: 'approvalCountAdjustment',
+    approved: 'approvalCountApproved'
+  };
+
+  for (const [key, elementId] of Object.entries(elements)) {
+    const el = document.getElementById(elementId);
+    if (el && stats[key] !== undefined) {
+      el.textContent = stats[key];
+    }
+  }
+
+  const pendingEl = document.getElementById('pendingCount');
+  const approvedEl = document.getElementById('approvedCount');
+  const rejectedEl = document.getElementById('rejectedCount');
+  const recountEl = document.getElementById('recountCount');
+
+  if (pendingEl) pendingEl.textContent = stats.pending || 0;
+  if (approvedEl) approvedEl.textContent = stats.approved || 0;
+  if (rejectedEl) rejectedEl.textContent = stats.rejected || 0;
+  if (recountEl) recountEl.textContent = stats.recount || 0;
+}
+
+function renderApprovalList(filteredApprovals) {
   const approvalListBody = document.getElementById('approvalListBody');
   const emptyState = document.getElementById('approvalEmptyState');
   const listView = document.getElementById('approvalListView');
   
   if (!approvalListBody) return;
 
+  // Use realApprovals if no filtered data provided
+  const approvals = filteredApprovals !== undefined ? filteredApprovals : realApprovals;
+
   // Filter by current tab
-  let filtered = filteredApprovals;
+  let filtered = approvals;
   if (currentApprovalFilter !== 'all') {
-    filtered = filteredApprovals.filter(a => a.status === currentApprovalFilter);
+    filtered = approvals.filter(a => a.status === currentApprovalFilter);
   }
 
   if (filtered.length === 0) {
@@ -4625,15 +4688,15 @@ function renderApprovalList(filteredApprovals = mockApprovals) {
       </div>
       <div>
         <div class="approval-submitter">
-          <div class="approval-submitter__avatar">${approval.submitter.initials}</div>
-          <span class="approval-submitter__name">${approval.submitter.name}</span>
+          <div class="approval-submitter__avatar">${approval.submitter?.initials || 'U'}</div>
+          <span class="approval-submitter__name">${approval.submitter?.name || 'Unknown'}</span>
         </div>
       </div>
       <div>
         <span class="approval-date">${formatDateTime(approval.submittedAt)}</span>
       </div>
       <div>
-        <span class="priority-badge priority-badge--${approval.priority}">${approval.priority.toUpperCase()}</span>
+        <span class="priority-badge priority-badge--${approval.priority}">${approval.priority?.toUpperCase() || 'MEDIUM'}</span>
       </div>
       <div>
         <span class="approval-status-chip ${APPROVAL_STATUSES[approval.status]?.class || ''}">${APPROVAL_STATUSES[approval.status]?.label || approval.status}</span>
@@ -4700,8 +4763,8 @@ function filterApprovals() {
   const search = document.getElementById('approvalcenterSearch')?.value.toLowerCase() || '';
   const typeFilter = document.getElementById('approvalTypeFilter')?.value || '';
 
-  const filtered = mockApprovals.filter(approval => {
-    const matchesSearch = approval.title.toLowerCase().includes(search) || approval.id.toLowerCase().includes(search);
+  const filtered = realApprovals.filter(approval => {
+    const matchesSearch = approval.title?.toLowerCase().includes(search) || approval.id?.toString().includes(search);
     const matchesType = !typeFilter || approval.type === typeFilter;
 
     return matchesSearch && matchesType;
@@ -4711,7 +4774,7 @@ function filterApprovals() {
 }
 
 function openApprovalDetail(approvalId) {
-  const approval = mockApprovals.find(a => a.id === approvalId);
+  const approval = realApprovals.find(a => a.id === approvalId);
   if (!approval) return;
 
   // Create or show drawer
@@ -4832,57 +4895,96 @@ function closeApprovalDetail() {
 }
 
 function approveItem(approvalId) {
-  const approval = mockApprovals.find(a => a.id === approvalId);
-  if (!approval) return;
-
-  approval.status = 'approved';
-  approval.history.unshift({
-    action: 'approved',
-    user: getCurrentUserRole() === 'admin' ? 'Admin' : 'Reviewer',
-    time: 'baru saja'
-  });
-
-  closeApprovalDetail();
-  loadApprovalCenter();
-  showToast(`Approval ${approvalId} berhasil disetujui`, true);
-}
-
-function rejectItem(approvalId) {
-  const approval = mockApprovals.find(a => a.id === approvalId);
-  if (!approval) return;
-
-  const notes = document.getElementById('approvalNotes')?.value;
-  if (!notes) {
-    showToast('Harap isi alasan penolakan', false);
+  const token = localStorage.getItem('access_token');
+  if (!token) {
+    showToast('Silakan login terlebih dahulu', false);
     return;
   }
 
-  approval.status = 'rejected';
-  approval.history.unshift({
-    action: `rejected: ${notes}`,
-    user: getCurrentUserRole() === 'admin' ? 'Admin' : 'Reviewer',
-    time: 'baru saja'
+  fetch(`/api/v1/approvals/${approvalId}/approve`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      closeApprovalDetail();
+      loadApprovalCenter();
+      showToast(`Approval berhasil disetujui`, true);
+    } else {
+      showToast(data.message || 'Gagal menyetujui approval', false);
+    }
+  })
+  .catch(err => {
+    console.error('Error approving:', err);
+    showToast('Terjadi kesalahan saat menyetujui', false);
   });
+}
 
-  closeApprovalDetail();
-  loadApprovalCenter();
-  showToast(`Approval ${approvalId} ditolak`, true);
+function rejectItem(approvalId) {
+  const token = localStorage.getItem('access_token');
+  if (!token) {
+    showToast('Silakan login terlebih dahulu', false);
+    return;
+  }
+
+  const notes = document.getElementById('approvalNotes')?.value;
+
+  fetch(`/api/v1/approvals/${approvalId}/reject`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ reason: notes || '' })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      closeApprovalDetail();
+      loadApprovalCenter();
+      showToast(`Approval berhasil ditolak`, true);
+    } else {
+      showToast(data.message || 'Gagal menolak approval', false);
+    }
+  })
+  .catch(err => {
+    console.error('Error rejecting:', err);
+    showToast('Terjadi kesalahan saat menolak', false);
+  });
 }
 
 function recountItem(approvalId) {
-  const approval = mockApprovals.find(a => a.id === approvalId);
-  if (!approval) return;
+  const token = localStorage.getItem('access_token');
+  if (!token) {
+    showToast('Silakan login terlebih dahulu', false);
+    return;
+  }
 
-  approval.status = 'recount';
-  approval.history.unshift({
-    action: 'recount requested',
-    user: getCurrentUserRole() === 'admin' ? 'Admin' : 'Reviewer',
-    time: 'baru saja'
+  fetch(`/api/v1/approvals/${approvalId}/recount`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      closeApprovalDetail();
+      loadApprovalCenter();
+      showToast(`Recount berhasil diminta`, true);
+    } else {
+      showToast(data.message || 'Gagal meminta recount', false);
+    }
+  })
+  .catch(err => {
+    console.error('Error requesting recount:', err);
+    showToast('Terjadi kesalahan saat meminta recount', false);
   });
-
-  closeApprovalDetail();
-  loadApprovalCenter();
-  showToast(`Recount diminta untuk ${approvalId}`, true);
 }
 
 /* ============================================
