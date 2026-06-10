@@ -1069,7 +1069,25 @@ async function loadV3Dashboard() {
     
     setText("v3_so_berjalan", formatNumber(data.opname?.berjalan || 0));
     setText("v3_so_selesai", formatNumber(data.opname?.selesai_bulan_ini || 0));
+    setText("v3_pending_approval", formatNumber(data.opname?.pending_approval || 0));
     setText("v3_total_produk", formatNumber(data.produk?.total || 0));
+    setText("v3_total_users", formatNumber(data.users?.total || 0));
+    setText("v3_active_tasks", formatNumber(data.tasks?.active || 0));
+    setText("v3_total_outlet", formatNumber(data.outlet?.total || 0));
+    
+    // Highlight pending approval if > 0
+    const pendingApproval = Number(data.opname?.pending_approval || 0);
+    const pendingApprovalCard = document.getElementById('v3_pending_approval_card');
+    if (pendingApprovalCard) {
+      pendingApprovalCard.classList.toggle('kpi-alert', pendingApproval > 0);
+    }
+    
+    // Highlight active tasks if > 0
+    const activeTasks = Number(data.tasks?.active || 0);
+    const activeTasksCard = document.getElementById('v3_active_tasks_card');
+    if (activeTasksCard) {
+      activeTasksCard.classList.toggle('kpi-alert', activeTasks > 0);
+    }
     
     // Update Aktivitas table
     const aktivitas = data.aktivitas || [];
@@ -1105,7 +1123,11 @@ async function loadV3Dashboard() {
     setText("v3_stok_kritis", "Error");
     setText("v3_so_berjalan", "Error");
     setText("v3_so_selesai", "Error");
+    setText("v3_pending_approval", "Error");
     setText("v3_total_produk", "Error");
+    setText("v3_total_users", "Error");
+    setText("v3_active_tasks", "Error");
+    setText("v3_total_outlet", "Error");
     const aktivitasEmpty = document.getElementById('v3AktivitasEmpty');
     if (aktivitasEmpty) aktivitasEmpty.textContent = 'Gagal memuat data. Periksa koneksi database.';
   }

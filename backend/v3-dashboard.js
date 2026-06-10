@@ -105,6 +105,27 @@ export default async function handler(req, res) {
         AND tahun = $2
     `, [currentMonth, currentYear]);
 
+    // 10. Pending Approval (menunggu_approval status)
+    const pendingApproval = await pool.query(`
+      SELECT COUNT(*) AS total
+      FROM stok_opname_perintah
+      WHERE status = 'menunggu_approval'
+    `);
+
+    // 11. Active Tasks (tasks in progress)
+    const activeTasks = await pool.query(`
+      SELECT COUNT(*) AS total
+      FROM task_center
+      WHERE status IN ('assigned', 'in_progress', 'review')
+    `);
+
+    // 12. Total Users
+    const totalUsers = await pool.query(`
+      SELECT COUNT(*) AS total
+      FROM users
+      WHERE is_active = true
+    `);
+
     // 10. Aktivitas Terbaru (transaksi hari ini)
     const aktivitasTerbaru = await pool.query(`
       SELECT 
@@ -171,7 +192,14 @@ export default async function handler(req, res) {
       },
       opname: {
         berjalan: Number(soBerjalan.rows[0]?.total || 0),
-        selesai_bulan_ini: Number(soSelesai.rows[0]?.total || 0)
+        selesai_bulan_ini: Number(soSelesai.rows[0]?.total || 0),
+        pending_approval: Number(pendingApproval.rows[0]?.total || 0)
+      },
+      tasks: {
+        active: Number(activeTasks.rows[0]?.total || 0)
+      },
+      users: {
+        total: Number(totalUsers.rows[0]?.total || 0)
       },
       aktivitas: aktivitasTerbaru.rows.map(a => ({
         tipe: a.tipe,
