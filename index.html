@@ -2367,6 +2367,76 @@
         </div>
       </div>
     </section>
+
+    <!-- Users Management -->
+    <section id="usersTab" class="tab-content" style="display:none;">
+      <div class="users-page">
+        <!-- Header -->
+        <div class="users-header">
+          <div class="users-header__left">
+            <p class="section-eyebrow">User Management</p>
+            <h2>Pengguna</h2>
+            <span class="page-caption" id="userCount">Memuat...</span>
+          </div>
+          <div class="users-header__right">
+            <div class="users-search">
+              <i data-lucide="search"></i>
+              <input type="text" id="userSearch" placeholder="Cari pengguna..." oninput="loadUsersList()">
+            </div>
+            <button type="button" class="btn-primary" onclick="openAddUserModal()">
+              <i data-lucide="user-plus"></i>
+              Tambah User
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="users-filters">
+          <div class="filter-bar">
+            <label class="filter-control">
+              <span>Role</span>
+              <select id="roleFilter" onchange="loadUsersList()">
+                <option value="">Semua Role</option>
+                <option value="admin">Admin</option>
+                <option value="staff_gudang">Staff Gudang</option>
+                <option value="checker_opname">Checker Opname</option>
+              </select>
+            </label>
+            <label class="filter-control">
+              <span>Status</span>
+              <select id="statusFilter" onchange="loadUsersList()">
+                <option value="">Semua Status</option>
+                <option value="true">Aktif</option>
+                <option value="false">Nonaktif</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="users-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted);">
+                  <div style="padding: 20px;">Memuat...</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
   </main>
 
   <div id="toast"></div>

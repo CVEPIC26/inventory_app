@@ -214,54 +214,77 @@ function renderUsersTable(users, tbodyId = 'usersTableBody') {
     return;
   }
 
-  tbody.innerHTML = users.map(user => `
-    <tr>
+  // Map database field names to expected names
+  const normalizeUser = (user) => ({
+    id: user.id,
+    name: user.name || user.nama_lengkap || user.username,
+    username: user.username,
+    email: user.email || '',
+    role: user.role || 'staff_gudang',
+    is_active: user.is_active !== undefined ? user.is_active : true
+  });
+
+  tbody.innerHTML = users.map(user => {
+    const u = normalizeUser(user);
+    const initial = u.name ? u.name.charAt(0).toUpperCase() : '?';
+    const roleLabel = u.role.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    
+    return `
+    <tr data-user-id="${u.id}">
       <td>
         <div style="display: flex; align-items: center; gap: 12px;">
           <div class="avatar" style="width: 32px; height: 32px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 12px;">
-            ${user.name.charAt(0).toUpperCase()}
+            ${initial}
           </div>
-          <span style="font-weight: 500;">${user.name}</span>
+          <span style="font-weight: 500;">${escapeHtml(u.name)}</span>
         </div>
       </td>
-      <td style="color: var(--text-secondary);">@${user.username}</td>
-      <td style="color: var(--text-secondary);">${user.email}</td>
+      <td style="color: var(--text-secondary);">@${escapeHtml(u.username)}</td>
+      <td style="color: var(--text-secondary);">${escapeHtml(u.email)}</td>
       <td>
-        <span class="badge ${getRoleBadgeClass(user.role)}">
-          ${user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+        <span class="badge ${getRoleBadgeClass(u.role)}">
+          ${escapeHtml(roleLabel)}
         </span>
       </td>
       <td>
-        <span class="badge ${getStatusBadgeClass(user.is_active)}">
-          ${getStatusText(user.is_active)}
+        <span class="badge ${getStatusBadgeClass(u.is_active)}">
+          ${getStatusText(u.is_active)}
         </span>
       </td>
       <td>
         <div style="display: flex; gap: 8px;">
-          <button class="btn btn-ghost btn-sm" onclick="editUser(${user.id})" title="Edit">
+          <button class="btn btn-ghost btn-sm" onclick="editUser(${u.id})" title="Edit">
             <i data-lucide="edit-2"></i>
           </button>
-          <button class="btn btn-ghost btn-sm" onclick="resetUserPassword(${user.id})" title="Reset Password">
+          <button class="btn btn-ghost btn-sm" onclick="resetUserPassword(${u.id})" title="Reset Password">
             <i data-lucide="key"></i>
           </button>
-          ${user.is_active
-            ? `<button class="btn btn-ghost btn-sm" onclick="disableUserAccount(${user.id})" title="Nonaktifkan">
+          ${u.is_active
+            ? `<button class="btn btn-ghost btn-sm" onclick="disableUserAccount(${u.id})" title="Nonaktifkan">
                 <i data-lucide="user-x"></i>
               </button>`
-            : `<button class="btn btn-ghost btn-sm" onclick="enableUserAccount(${user.id})" title="Aktifkan">
+            : `<button class="btn btn-ghost btn-sm" onclick="enableUserAccount(${u.id})" title="Aktifkan">
                 <i data-lucide="user-check"></i>
               </button>`
           }
-          <button class="btn btn-ghost btn-sm" onclick="deleteUserAccount(${user.id})" title="Hapus" style="color: var(--danger);">
+          <button class="btn btn-ghost btn-sm" onclick="deleteUserAccount(${u.id})" title="Hapus" style="color: var(--danger);">
             <i data-lucide="trash-2"></i>
           </button>
         </div>
       </td>
     </tr>
-  `).join('');
+  `}).join('');
 
   // Re-init icons
   if (window.lucide) lucide.createIcons();
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 // ============================================
@@ -375,13 +398,49 @@ async function loadUsersList() {
 
     const data = await UserManagement.getUsers({ search, role });
     
-    if (data.success && data.data?.users) {
-      renderUsersTable(data.data.users);
+    // API returns: { success: true, data: [...users], pagination: {...} }
+    // Also handles: { success: true, data: { users: [...], total: n } }
+    let users = [];
+    let total = 0;
+
+    if (Array.isArray(data.data)) {
+      users = data.data;
+      total = users.length;
+    } else if (data.data?.users) {
+      users = data.data.users;
+      total = data.data.total || users.length;
+    } else if (data.data?.data) {
+      // Nested response
+      const innerData = Array.isArray(data.data.data) ? data.data.data : data.data.data.users;
+      users = Array.isArray(innerData) ? innerData : (innerData || []);
+      total = data.data.data.total || users.length;
+    }
+
+    if (data.success && users.length > 0) {
+      renderUsersTable(users);
       
       // Update count
       const countEl = document.getElementById('userCount');
       if (countEl) {
-        countEl.textContent = `${data.data.total} pengguna`;
+        countEl.textContent = `${total} pengguna`;
+      }
+    } else if (data.success && users.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--text-muted); margin-bottom: 12px;">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <p>Belum ada pengguna</p>
+          </td>
+        </tr>
+      `;
+      const countEl = document.getElementById('userCount');
+      if (countEl) {
+        countEl.textContent = '0 pengguna';
       }
     }
   } catch (error) {
@@ -454,8 +513,25 @@ async function loadSettingsUsers() {
   try {
     const data = await UserManagement.getUsers();
     
-    if (data.success && data.data?.users) {
-      renderUsersTable(data.data.users, 'settingsUsersTableBody');
+    // Same response format handling as loadUsersList
+    let users = [];
+    if (Array.isArray(data.data)) {
+      users = data.data;
+    } else if (data.data?.users) {
+      users = data.data.users;
+    } else if (data.data?.data) {
+      const innerData = Array.isArray(data.data.data) ? data.data.data : data.data.data.users;
+      users = Array.isArray(innerData) ? innerData : (innerData || []);
+    }
+
+    if (data.success && users.length > 0) {
+      renderUsersTable(users, 'settingsUsersTableBody');
+    } else {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align: center; color: var(--text-muted);">Belum ada pengguna</td>
+        </tr>
+      `;
     }
   } catch (error) {
     console.error('Failed to load settings users:', error);

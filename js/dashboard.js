@@ -958,14 +958,15 @@ function selectMenu(event, menu) {
 
   // Admin-only menus
   if (menu === "users") {
-    // User management - placeholder for now
-    showToast('Manajemen User - dalam pengembangan', true);
+    // User management - show users tab
+    document.getElementById("usersTab").style.display = "block";
+    initUsersPage();
     return;
   }
 
   if (menu === "settings") {
-    // Settings - placeholder for now
-    showToast('Pengaturan - dalam pengembangan', true);
+    // Settings - show placeholder, redirect to users for now
+    showToast('Pengaturan - gunakan menu Pengguna untuk manajemen user', true);
     return;
   }
 }

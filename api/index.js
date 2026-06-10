@@ -35,12 +35,28 @@ import v3PersediaanHandler from "../backend/v3-persediaan.js";
 import v3OpnameHandler from "../backend/v3-opname.js";
 import v3OpnameDetailHandler from "../backend/v3-opname-detail.js";
 import v3ChartHandler from "../backend/v3-chart.js";
+import usersApiHandler from "../backend/users-api.js";
 
 const routes = {
+  // Auth routes
   "POST /v1/auth/login": authHandler,
   "POST /v1/auth/login/admin": authHandler,
   "POST /v1/auth/login/user": authHandler,
   "POST /v1/auth/logout": authHandler,
+
+  // User management routes
+  "GET /v1/users": usersApiHandler,
+  "POST /v1/users": usersApiHandler,
+  "GET /v1/users/stats": usersApiHandler,
+  "GET /v1/users/roles": usersApiHandler,
+  "GET /v1/users/:id": usersApiHandler,
+  "PUT /v1/users/:id": usersApiHandler,
+  "DELETE /v1/users/:id": usersApiHandler,
+  "POST /v1/users/:id/enable": usersApiHandler,
+  "POST /v1/users/:id/disable": usersApiHandler,
+  "POST /v1/users/:id/reset-password": usersApiHandler,
+
+  // KPI and Dashboard routes
   "GET /kpi": kpiHandler,
   "GET /chart": chartHandler,
   "GET /mini-review": miniReviewHandler,
@@ -95,7 +111,26 @@ function getRoutePath(req) {
 export default async function handler(req, res) {
   const routePath = getRoutePath(req);
   const key = `${req.method} ${routePath}`;
-  const routeHandler = routes[key];
+  let routeHandler = routes[key];
+
+  // If no exact match, try parameterized routes
+  if (!routeHandler) {
+    const method = req.method;
+    for (const pattern of Object.keys(routes)) {
+      if (!pattern.startsWith(method)) continue;
+
+      const routePattern = pattern.replace(`${method} `, "");
+      const regex = new RegExp(`^${routePattern.replace(/:[^/]+/g, '([^/]+)')}$`);
+      const match = routePath.match(regex);
+
+      if (match) {
+        routeHandler = routes[pattern];
+        // Store extracted params for later use
+        req.params = match.slice(1);
+        break;
+      }
+    }
+  }
 
   if (!routeHandler) {
     return res.status(404).json({ error: `Route tidak ditemukan: ${key}` });
