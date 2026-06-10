@@ -142,6 +142,7 @@ def register_blueprints(app):
     # Import and register blueprints safely so app can start even if a blueprint errors
     bp_map = [
         ('flask_app.blueprints.auth', 'auth_bp', '/api/v1/auth'),
+        ('flask_app.blueprints.users', 'users_bp', '/api/v1/users'),
         ('flask_app.blueprints.produk', 'produk_bp', '/api/v1/produk'),
         ('flask_app.blueprints.rak', 'rak_bp', '/api/v1/rak'),
         ('flask_app.blueprints.stok', 'stok_bp', '/api/v1/stok'),
