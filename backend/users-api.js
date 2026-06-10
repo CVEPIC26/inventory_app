@@ -29,7 +29,8 @@ function generateTempPassword(length = 12) {
 // Parse route path from request
 function getRoutePath(req) {
   if (req.query?.route) {
-    return String(req.query.route).replace(/^\/+/, "");
+    // Ensure consistent format with leading slash
+    return "/" + String(req.query.route).replace(/^\/+/, "");
   }
   const url = new URL(req.url, "http://localhost");
   return url.pathname.replace(/^\/api/, "") || "/";
@@ -41,9 +42,9 @@ function extractUserId(path) {
   return match ? parseInt(match[1], 10) : null;
 }
 
-// Extract action from route path (for nested routes like /users/:id/enable)
+// Extract action from route path (for nested routes like /users/:id/enable or /users/:id/reset-password)
 function extractAction(path) {
-  const match = path.match(/^v1\/users\/\d+\/(\w+)/);
+  const match = path.match(/^v1\/users\/\d+\/([a-z-]+)/i);
   return match ? match[1] : null;
 }
 
@@ -463,12 +464,18 @@ async function getRoles(req, res) {
   });
 }
 
+// Normalize route path (remove leading slash for consistent comparison)
+function normalizeRoute(routePath) {
+  return routePath.replace(/^\/+/, '');
+}
+
 // Main route handler
 export default async function usersApiHandler(req, res) {
   const routePath = getRoutePath(req);
+  const normalizedPath = normalizeRoute(routePath);
   const method = req.method;
-  const action = extractAction(routePath);
-  const userId = req.params?.[0] ? parseInt(req.params[0], 10) : extractUserId(routePath);
+  const action = extractAction(normalizedPath);
+  const userId = req.params?.[0] ? parseInt(req.params[0], 10) : extractUserId(normalizedPath);
 
   // Nested routes with action (enable, disable, reset-password)
   if (userId && action) {
@@ -480,22 +487,22 @@ export default async function usersApiHandler(req, res) {
   }
 
   // Route: GET /v1/users/stats
-  if (method === "GET" && routePath === "v1/users/stats") {
+  if (method === "GET" && normalizedPath === "v1/users/stats") {
     return getUserStats(req, res);
   }
 
   // Route: GET /v1/users/roles
-  if (method === "GET" && routePath === "v1/users/roles") {
+  if (method === "GET" && normalizedPath === "v1/users/roles") {
     return getRoles(req, res);
   }
 
   // Route: GET /v1/users (list users)
-  if (method === "GET" && routePath === "v1/users") {
+  if (method === "GET" && normalizedPath === "v1/users") {
     return listUsers(req, res);
   }
 
   // Route: POST /v1/users (create user)
-  if (method === "POST" && routePath === "v1/users") {
+  if (method === "POST" && normalizedPath === "v1/users") {
     return createUser(req, res);
   }
 
