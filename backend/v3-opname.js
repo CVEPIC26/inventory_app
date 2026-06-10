@@ -7,6 +7,36 @@ import pool from "../services/db.js";
 // 2. POST - Admin buat perintah SO baru
 // 3. PUT - Update status SO (User: mulai/submit, Admin: approval/finalisasi)
 
+// Get current user from token
+async function getCurrentUser(req) {
+  const authHeader = req.headers?.authorization;
+  if (!authHeader?.startsWith("Bearer ")) return null;
+
+  try {
+    const token = authHeader.slice(7);
+    const parts = token.split(".");
+    if (parts.length !== 2) return null;
+
+    return JSON.parse(Buffer.from(parts[0], "base64url").toString());
+  } catch {
+    return null;
+  }
+}
+
+// Check admin authorization - matches approval-api.js behavior
+async function requireAdmin(req, res) {
+  const user = await getCurrentUser(req);
+  if (!user) {
+    res.status(401).json({ success: false, message: "Unauthorized" });
+    return null;
+  }
+  if (user.role !== "admin") {
+    res.status(403).json({ success: false, message: "Admin access required" });
+    return null;
+  }
+  return user;
+}
+
 // GET Handler
 export async function handleGet(req, res) {
   try {
@@ -172,7 +202,10 @@ export async function handlePut(req, res) {
         break;
         
       case 'approve':
-        // Admin approve SO
+        // Admin approve SO - require admin authorization
+        const adminApprove = await requireAdmin(req, res);
+        if (!adminApprove) return;
+        
         if (so.status !== 'menunggu_approval') {
           return res.status(400).json({ error: "SO tidak bisa diapprove dari status ini" });
         }
@@ -195,7 +228,10 @@ export async function handlePut(req, res) {
         break;
         
       case 'reject':
-        // Admin reject SO
+        // Admin reject SO - require admin authorization
+        const adminReject = await requireAdmin(req, res);
+        if (!adminReject) return;
+        
         await pool.query(`
           UPDATE stok_opname_perintah 
           SET status = 'ditolak'

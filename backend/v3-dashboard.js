@@ -112,11 +112,12 @@ export default async function handler(req, res) {
       WHERE status = 'menunggu_approval'
     `);
 
-    // 11. Active Tasks (tasks in progress)
-    const activeTasks = await pool.query(`
+    // 11. Task Aktif - Total active operations (pending + in_progress)
+    // Replaced non-existent task_center with stok_opname_perintah metrics
+    const taskAktif = await pool.query(`
       SELECT COUNT(*) AS total
-      FROM task_center
-      WHERE status IN ('assigned', 'in_progress', 'review')
+      FROM stok_opname_perintah
+      WHERE status IN ('menunggu', 'proses', 'menunggu_approval')
     `);
 
     // 12. Total Users
@@ -196,7 +197,7 @@ export default async function handler(req, res) {
         pending_approval: Number(pendingApproval.rows[0]?.total || 0)
       },
       tasks: {
-        active: Number(activeTasks.rows[0]?.total || 0)
+        active: Number(taskAktif.rows[0]?.total || 0)
       },
       users: {
         total: Number(totalUsers.rows[0]?.total || 0)
