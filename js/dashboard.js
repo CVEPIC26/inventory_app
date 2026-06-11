@@ -223,10 +223,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   initTahun("opnameTahun");
   setInitialPeriod();
   bindGlobalFilters();
-  selectInput(null, "penjualan");
-  selectImport(null, "penjualan");
-  selectPersediaanInput(null, "pembelian");
-  selectPersediaanImport(null, "pembelian");
   await loadProdukOptions();
   initOpnameQtyModal();
 
@@ -645,7 +641,7 @@ function getQueryParams(includeProduct = true) {
 }
 
 function showTab(event, id) {
-  document.querySelectorAll("#v3DashboardTab, #kpiTab, #chartTab, #miniReviewTab, #outletTransactionTab, #inputTab, #importTab")
+  document.querySelectorAll("#v3DashboardTab, #kpiTab, #chartTab, #miniReviewTab, #outletTransactionTab")
     .forEach(tab => { tab.style.display = "none"; });
 
   document.querySelectorAll("#salesTabMenu button")
@@ -1275,129 +1271,6 @@ function selectOutletDetailCategory(event, category) {
     toArray(state.outletTransactions.detail),
     toArray(state.outletTransactions.outlets).find(item => item.nama_outlet === selectedSalesOutlet)
   );
-}
-
-
-
-function buildForm(type, prefix) {
-  const field = id => `${prefix}_${id}`;
-  const forms = {
-    penjualan: `
-      <h3>Input Penjualan Warehouse</h3>
-      <div class="form-grid">
-        <input type="date" id="${field("tgl")}" />
-        <input type="text" id="${field("outlet")}" placeholder="Outlet" />
-        <input type="text" id="${field("sku")}" list="produkList" placeholder="SKU / Produk" />
-        <input type="number" id="${field("qty")}" placeholder="Qty" />
-      </div>
-    `,
-    pembelian: `
-      <h3>Input Pembelian</h3>
-      <div class="form-grid">
-        <input type="date" id="${field("tgl")}" />
-        <input type="text" id="${field("sku")}" list="produkList" placeholder="SKU / Produk" />
-        <input type="number" id="${field("qty")}" placeholder="Qty" />
-      </div>
-    `,
-    stok_awal: `
-      <h3>Input Stok Awal</h3>
-      <div class="form-grid">
-        <input type="text" id="${field("sku")}" list="produkList" placeholder="SKU / Produk" />
-        <input type="number" id="${field("qty")}" placeholder="Qty Awal" />
-      </div>
-    `,
-    outlet: `
-      <h3>Input Outlet</h3>
-      <div class="form-grid">
-        <input type="text" id="${field("outlet")}" placeholder="Nama Outlet" />
-      </div>
-    `
-  };
-
-  return forms[type] || "";
-}
-
-function selectInput(event, type) {
-  if (event) {
-    document.querySelectorAll("#inputTab .mini-sidebar div")
-      .forEach(item => item.classList.remove("active-mini"));
-    event.target.classList.add("active-mini");
-  }
-
-  document.getElementById("inputContent").innerHTML = `
-    ${buildForm(type, "sales")}
-    <div class="top-space">
-      <button class="btn-primary" onclick="previewInput('${type}', 'preview', 'sales')">Preview</button>
-    </div>
-    <div id="preview"></div>
-  `;
-}
-
-function selectPersediaanInput(event, type) {
-  if (event) {
-    document.querySelectorAll("#persediaanInputMenu div")
-      .forEach(item => item.classList.remove("active-mini"));
-    event.target.classList.add("active-mini");
-  }
-
-  document.getElementById("persediaanInputContent").innerHTML = `
-    ${buildForm(type, "inventory")}
-    <div class="top-space">
-      <button class="btn-primary" onclick="previewInput('${type}', 'persediaanPreview', 'inventory')">Preview</button>
-    </div>
-    <div id="persediaanPreview"></div>
-  `;
-}
-
-function previewInput(type, previewId, prefix) {
-  const val = id => document.getElementById(`${prefix}_${id}`)?.value || "-";
-  const details = [];
-
-  if (type === "penjualan") details.push(`Tanggal: ${val("tgl")}`, `Outlet: ${val("outlet")}`, `SKU: ${val("sku")}`, `Qty: ${val("qty")}`);
-  if (type === "pembelian") details.push(`Tanggal: ${val("tgl")}`, `SKU: ${val("sku")}`, `Qty: ${val("qty")}`);
-  if (type === "stok_awal") details.push(`SKU: ${val("sku")}`, `Qty Awal: ${val("qty")}`);
-  if (type === "outlet") details.push(`Nama Outlet: ${val("outlet")}`);
-
-  document.getElementById(previewId).innerHTML = `
-    <div class="preview-box">
-      <strong>Preview data</strong><br>
-      ${details.map(item => escapeHtml(item)).join("<br>")}
-      <div class="top-space">
-        <button class="btn-primary" onclick="submitData('${type}', '${prefix}')">Simpan</button>
-      </div>
-    </div>
-  `;
-}
-
-async function submitData(type, prefix) {
-  showLoader();
-  const val = id => document.getElementById(`${prefix}_${id}`)?.value || "";
-  let body = {};
-
-  if (type === "penjualan") body = { tanggal: val("tgl"), nama_outlet: val("outlet"), sku: getSkuFromRaw(val("sku")), qty: val("qty") };
-  if (type === "pembelian") body = { tanggal: val("tgl"), sku: getSkuFromRaw(val("sku")), qty: val("qty") };
-  if (type === "stok_awal") body = { sku: getSkuFromRaw(val("sku")), qty: val("qty") };
-  if (type === "outlet") body = { nama_outlet: val("outlet") };
-
-  try {
-    const data = await fetchJson(`/api/add-${type}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-
-    showToast(data.message || "Data berhasil disimpan");
-    await applyCurrentFilters();
-  } catch (error) {
-    console.error("Submit error:", error);
-    showToast(error.message || "Gagal menyimpan data", false);
-  } finally {
-    hideLoader();
-  }
-}
-
-function getSkuFromRaw(raw = "") {
-  return raw.includes(" - ") ? raw.split(" - ")[0].trim() : raw.trim();
 }
 
 function selectImport(event, type) {
