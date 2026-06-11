@@ -535,59 +535,7 @@ async function loadAuditOutletOptions() {
   }
 }
 
-// Build dynamic main menu from backend data (outlets, top products).
-async function buildDynamicMenu() {
-  const container = document.getElementById('mainQuickMenu');
-  if (!container) return;
 
-  let outlets = [];
-  let topProduk = [];
-  try {
-    outlets = toArray(await fetchJson('/api/outlet-list'));
-  } catch (e) {
-    console.warn('Could not fetch outlets', e);
-  }
-
-  try {
-    topProduk = toArray(await fetchJson('/api/top-produk'));
-  } catch (e) {
-    console.warn('Could not fetch top-produk', e);
-  }
-
-  // Render outlet quick tiles (limit to 6)
-  const outletsHtml = outlets.slice(0, 6).map(o => `
-    <button class="quick-tile tile-blue" onclick="selectMenu(null,'outlet-${escapeHtml(String(o.id))}')" aria-label="${escapeHtml(o.nama_outlet)}" tabindex="0">
-      <div class="icon-wrap"><i data-lucide="home"></i></div>
-      <span>${escapeHtml(o.nama_outlet)}</span>
-    </button>
-  `).join('');
-
-  // Render top product quick tiles
-  const produkHtml = topProduk.slice(0, 6).map(p => `
-    <button class="quick-tile tile-green" onclick="selectMenu(null,'produk-${escapeHtml(p.sku)}')" aria-label="${escapeHtml(p.nama_produk)}" tabindex="0">
-      <div class="icon-wrap"><i data-lucide="box"></i></div>
-      <span>${escapeHtml(p.nama_produk)}</span>
-    </button>
-  `).join('');
-
-  // Insert into container: find first quick-group for Penjualan and append sections
-  const section = container.querySelector('.quick-menu-section');
-  if (section) {
-    // Create outlets block
-    const outletsBlock = document.createElement('div');
-    outletsBlock.className = 'quick-menu-section';
-    outletsBlock.innerHTML = `<h4 class="quick-group">Outlet Cepat</h4><div class="quick-menu-grid">${outletsHtml}</div>`;
-    section.parentNode.insertBefore(outletsBlock, section.nextSibling);
-
-    // Create top-produk block
-    const produkBlock = document.createElement('div');
-    produkBlock.className = 'quick-menu-section';
-    produkBlock.innerHTML = `<h4 class="quick-group">Top Produk</h4><div class="quick-menu-grid">${produkHtml}</div>`;
-    section.parentNode.insertBefore(produkBlock, outletsBlock.nextSibling);
-  }
-  // Re-init lucide icons if available
-  if (window.lucide) window.lucide.replace();
-}
 
 function getSelectedBarcodeProduct() {
   const raw = (document.getElementById("barcodeProductInput")?.value || "").trim();
@@ -853,7 +801,7 @@ function selectMenu(event, menu) {
   if (menu === "penjualan") {
     document.getElementById("kpiTab").style.display = "block";
     document.querySelector("#salesTabMenu button")?.classList.add("active-tab");
-    loadData();
+    loadV3Dashboard();
     return;
   }
 
@@ -861,7 +809,6 @@ function selectMenu(event, menu) {
     document.getElementById("persediaanTab").style.display = "block";
     showModuleTab(null, "persediaan", "persediaanOverview");
     document.querySelector("#persediaanMenu button")?.classList.add("active-tab");
-    loadPersediaan();
     return;
   }
 
@@ -871,7 +818,6 @@ function selectMenu(event, menu) {
     document.getElementById("forecastTab").style.display = "block";
     showModuleTab(null, "forecast", "forecastOverview");
     document.querySelector("#forecastMenu button")?.classList.add("active-tab");
-    loadForecast();
     return;
   }
 
@@ -895,48 +841,40 @@ function selectMenu(event, menu) {
 
   if (menu === "taskcenter") {
     document.getElementById("taskcenterTab").style.display = "block";
-    loadTaskCenter();
   }
 
   if (menu === "approvalcenter") {
     document.getElementById("approvalcenterTab").style.display = "block";
-    loadApprovalCenter();
   }
 
   if (menu === "activity") {
     document.getElementById("activityTab").style.display = "block";
-    loadActivityTimeline();
   }
 
   if (menu === "audit") {
     document.getElementById("auditTab").style.display = "block";
-    loadAuditCenter();
   }
 
   if (menu === "reports") {
     document.getElementById("reportsTab").style.display = "block";
-    loadReportsPage();
   }
 
   // User-specific menus
   if (menu === "mydashboard") {
     // Show user dashboard - reuse operator dashboard logic
     document.getElementById("operatorTab").style.display = "block";
-    loadOperatorDashboard();
     return;
   }
 
   if (menu === "sotasks") {
     // User tasks - show opname commands assigned to user
     document.getElementById("taskcenterTab").style.display = "block";
-    loadTaskCenter();
     return;
   }
 
   if (menu === "sohistory") {
     // User history - show opname history
     document.getElementById("approvalcenterTab").style.display = "block";
-    loadApprovalCenter();
     return;
   }
 
@@ -950,7 +888,6 @@ function selectMenu(event, menu) {
   if (menu === "users") {
     // User management - show users tab
     document.getElementById("usersTab").style.display = "block";
-    initUsersPage();
     return;
   }
 
@@ -984,19 +921,17 @@ async function applyCurrentFilters() {
   updateFilterStatus();
 
   if (currentMenu === "penjualan") {
-    await loadData();
+    await loadV3Dashboard();
     return;
   }
 
   if (currentMenu === "persediaan") {
-    await loadPersediaan();
     return;
   }
 
   // Audit removed — no action required here
 
   if (currentMenu === "forecast") {
-    await loadForecast();
     return;
   }
 
@@ -1006,25 +941,6 @@ async function applyCurrentFilters() {
     await loadOpnameKpiData();
     if (state.activePerintah?.id) await loadStokSistem();
     updateOpnameInputVisibility();
-  }
-}
-
-async function loadData() {
-  showLoader();
-  try {
-    await Promise.all([
-      loadKPI(),
-      loadChart(),
-      loadTopProduk(),
-      loadTopOutlet(),
-      loadOutletStatus(),
-      loadOutletTransactionMonitor(false)
-    ]);
-  } catch (error) {
-    console.error("Load data error:", error);
-    showToast(error.message || "Gagal memuat dashboard penjualan", false);
-  } finally {
-    hideLoader();
   }
 }
 
@@ -1361,214 +1277,7 @@ function selectOutletDetailCategory(event, category) {
   );
 }
 
-async function loadKPI() {
-  const data = toObject(await fetchJson(`/api/kpi?${getQueryParams().toString()}`));
 
-  setText("kpi_qty", formatNumber(data.total_qty));
-  setText("kpi_produk", formatNumber(data.produk_terjual));
-  setText("kpi_produk_belum", formatNumber(data.produk_belum));
-  setText("kpi_outlet", formatNumber(data.outlet_transaksi));
-  setText("kpi_outlet_belum", formatNumber(data.outlet_tidak));
-  setText("kpi_nilai", formatRupiah(data.total_nilai));
-  setText("kpi_modal", formatRupiah(data.total_modal));
-
-  const profitEl = document.getElementById("kpi_profit");
-  if (profitEl) {
-    const profit = Number(data.profit || 0);
-    profitEl.textContent = `${profit >= 0 ? "▲" : "▼"} ${formatRupiah(Math.abs(profit))}`;
-    profitEl.style.color = profit >= 0 ? "#257a56" : "#b14141";
-  }
-}
-
-async function loadChart() {
-  // Check if canvas exists before fetching data
-  const ctx = document.getElementById("chart");
-  if (!ctx) return;
-  
-  try {
-    const data = toArray(await fetchJson(`/api/chart?${new URLSearchParams({
-      tahun: getTahun(),
-      ...(getSelectedSku() ? { sku: getSelectedSku() } : {})
-    }).toString()}`));
-
-    const labels = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-    const values = new Array(12).fill(0);
-    data.forEach(item => {
-      values[Number(item.bulan) - 1] = Number(item.total || 0);
-    });
-
-    // Check if data changed to avoid unnecessary re-renders
-    const cacheKey = 'chart-sales';
-    const newData = { labels, values };
-    
-    if (!chartManager.shouldUpdate(cacheKey, newData) && chart) {
-      return; // No update needed
-    }
-
-    // Destroy existing chart before creating new one
-    chart = chartManager.destroyChart(chart);
-
-    const config = {
-      type: "line",
-      data: {
-        labels,
-        datasets: [{
-          label: "Penjualan Bulanan",
-          data: values,
-          borderColor: "#b85c38",
-          backgroundColor: "rgba(184, 92, 56, 0.12)",
-          tension: 0.35,
-          borderWidth: 3,
-          fill: true,
-          pointRadius: 4,
-          pointBackgroundColor: "#b85c38"
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 600 },
-        plugins: {
-          legend: { display: false }
-        }
-      }
-    };
-
-    chart = chartManager.createChart("chart", config, cacheKey);
-    if (chart) chartManager.caches[cacheKey].data = newData;
-  } catch (error) {
-    console.error('Error loading sales chart:', error);
-  }
-}
-
-async function loadTopProduk() {
-  const ctx = document.getElementById("chartTopProduk");
-  if (!ctx) return;
-  
-  try {
-    const data = toArray(await fetchJson(`/api/top-produk?${getQueryParams().toString()}`));
-    
-    // Check if data changed
-    const cacheKey = 'chart-topProduk';
-    const newData = data.map(item => item.nama_produk);
-    
-    if (!chartManager.shouldUpdate(cacheKey, newData) && chartTopProduk) {
-      return;
-    }
-
-    // Destroy existing chart
-    chartTopProduk = chartManager.destroyChart(chartTopProduk);
-
-    const config = {
-      type: "bar",
-      data: {
-        labels: data.map(item => item.nama_produk),
-        datasets: [{
-          label: "Qty",
-          data: data.map(item => Number(item.total || 0)),
-          backgroundColor: "#d8a25e"
-        }]
-      },
-      options: {
-        indexAxis: "y",
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 600 },
-        plugins: { legend: { display: false } }
-      }
-    };
-
-    chartTopProduk = chartManager.createChart("chartTopProduk", config, cacheKey);
-    if (chartTopProduk) chartManager.caches[cacheKey].data = newData;
-  } catch (error) {
-    console.error('Error loading top produk chart:', error);
-  }
-}
-
-async function loadTopOutlet() {
-  const ctx = document.getElementById("chartTopOutlet");
-  if (!ctx) return;
-  
-  try {
-    const data = toArray(await fetchJson(`/api/top-outlet?${getQueryParams().toString()}`));
-    
-    // Check if data changed
-    const cacheKey = 'chart-topOutlet';
-    const newData = data.map(item => item.nama_outlet);
-    
-    if (!chartManager.shouldUpdate(cacheKey, newData) && chartTopOutlet) {
-      return;
-    }
-
-    // Destroy existing chart
-    chartTopOutlet = chartManager.destroyChart(chartTopOutlet);
-
-    const config = {
-      type: "bar",
-      data: {
-        labels: data.map(item => item.nama_outlet),
-        datasets: [{
-          label: "Qty",
-          data: data.map(item => Number(item.total || 0)),
-          backgroundColor: "#257a56"
-        }]
-      },
-      options: {
-        indexAxis: "y",
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 600 },
-        plugins: { legend: { display: false } }
-      }
-    };
-
-    chartTopOutlet = chartManager.createChart("chartTopOutlet", config, cacheKey);
-    if (chartTopOutlet) chartManager.caches[cacheKey].data = newData;
-  } catch (error) {
-    console.error('Error loading top outlet chart:', error);
-  }
-}
-
-async function loadOutletStatus() {
-  const ctx = document.getElementById("chartOutletStatus");
-  if (!ctx) return;
-  
-  try {
-    const data = toObject(await fetchJson(`/api/outlet-status?${getQueryParams().toString()}`));
-    
-    // Check if data changed
-    const cacheKey = 'chart-outletStatus';
-    const newData = [data.transaksi, data.tidak];
-    
-    if (!chartManager.shouldUpdate(cacheKey, newData) && chartOutletStatus) {
-      return;
-    }
-
-    // Destroy existing chart
-    chartOutletStatus = chartManager.destroyChart(chartOutletStatus);
-
-    const config = {
-      type: "doughnut",
-      data: {
-        labels: ["Transaksi", "Tidak Transaksi"],
-        datasets: [{
-          data: [Number(data.transaksi || 0), Number(data.tidak || 0)],
-          backgroundColor: ["#257a56", "#b14141"]
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 600 }
-      }
-    };
-
-    chartOutletStatus = chartManager.createChart("chartOutletStatus", config, cacheKey);
-    if (chartOutletStatus) chartManager.caches[cacheKey].data = newData;
-  } catch (error) {
-    console.error('Error loading outlet status chart:', error);
-  }
-}
 
 function buildForm(type, prefix) {
   const field = id => `${prefix}_${id}`;
@@ -3698,16 +3407,6 @@ function loadOperatorDashboard() {
   }
 }
 
-function populateMockOperatorProgress() {
-  const el = (id) => document.getElementById(id);
-  if (el("operator_tasks_completed")) el("operator_tasks_completed").innerHTML = `0<span>/<span id="operator_tasks_total">0</span></span>`;
-  if (el("operator_tasks_total")) el("operator_tasks_total").textContent = '0';
-  if (el("operator_items_counted")) el("operator_items_counted").textContent = '0';
-  if (el("operator_variance")) el("operator_variance").textContent = '0';
-  if (el("operatorTasksProgress")) el("operatorTasksProgress").style.width = '0%';
-  if (el("taskCount")) el("taskCount").textContent = '0 tugas';
-}
-
 function startTask(taskId) {
   showToast(`Memulai task: ${taskId}`, true);
   // Navigate to opname for stock opname tasks
@@ -3770,9 +3469,6 @@ const TASK_PRIORITIES = {
   low: { label: 'Low', class: 'priority-badge--low' }
 };
 
-// Task data (loaded from session)
-const mockTasks = [];
-
 let currentTaskView = 'list';
 
 function loadTaskCenter() {
@@ -3781,7 +3477,7 @@ function loadTaskCenter() {
   populateBoardView();
 }
 
-function renderTaskList(filteredTasks = mockTasks) {
+function renderTaskList(filteredTasks) {
   const taskListBody = document.getElementById('taskListBody');
   if (!taskListBody) return;
 

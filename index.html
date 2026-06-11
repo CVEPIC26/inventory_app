@@ -6,8 +6,6 @@
   <title>CV EPIC Warehouse</title>
   <!-- Design System CSS -->
   <link rel="stylesheet" href="/css/design-system.css?v=v3-20260610">
-  <!-- Legacy styles for compatibility -->
-  <link rel="stylesheet" href="/css/style.css?v=v3-20260610">
   <link rel="icon" type="image/png" href="/assets/logo.png">
 </head>
 <body>
@@ -308,8 +306,6 @@
       </div>
     </section>
 
-    <!-- Legacy quick menu and tabs removed per cleanup -->
-
     <!-- V3 ERP DASHBOARD - MODERN WAREHOUSE -->
     <section id="v3DashboardTab" class="tab-content">
       <div class="erp-dashboard">
@@ -412,8 +408,6 @@
         </div>
       </div>
     </section>
-
-    <!-- Legacy tabs removed per cleanup -->
 
     <section id="opnameTab" class="tab-content" style="display:none;">
       <div class="card opname-workspace">
@@ -818,20 +812,6 @@
       </div>
     </section>
 
-    <!-- Legacy operator dashboard removed per cleanup -->
-
-    <!-- Legacy admin dashboard removed per cleanup -->
-
-    <!-- Legacy task center removed per cleanup -->
-
-    <!-- Legacy approval center removed per cleanup -->
-
-    <!-- Legacy activity timeline removed per cleanup -->
-
-    <!-- Legacy audit center removed per cleanup -->
-
-    <!-- Legacy reports section removed per cleanup -->
-
     <!-- Users Management -->
     <section id="usersTab" class="tab-content" style="display:none;">
       <div class="users-page">
@@ -1031,159 +1011,7 @@
     <div class="credit">Design & UI enhancements: Mr.Wid</div>
   </footer>
 
-  <!-- Mobile Bottom Navigation - 5 core actions -->
-  <nav class="mobile-bottom-nav" id="mobileBottomNav">
-    <button type="button" class="mobile-nav-item" onclick="selectMenu(event,'dashboard')" data-nav="dashboard">
-      <i data-lucide="layout-dashboard"></i>
-      <span>Dashboard</span>
-    </button>
-    <button type="button" class="mobile-nav-item" onclick="selectMenu(event,'persediaan')" data-nav="persediaan">
-      <i data-lucide="package"></i>
-      <span>Stok</span>
-    </button>
-    <button type="button" class="mobile-nav-item mobile-nav-item--primary" onclick="selectMenu(event,'opname')" data-nav="opname">
-      <i data-lucide="scan-line"></i>
-      <span>Scan</span>
-    </button>
-    <button type="button" class="mobile-nav-item" onclick="selectMenu(event,'taskcenter')" data-nav="taskcenter">
-      <i data-lucide="clipboard-check"></i>
-      <span>Task</span>
-    </button>
-    <button type="button" class="mobile-nav-item" onclick="toggleMobileMenu()" data-nav="account">
-      <i data-lucide="user-circle"></i>
-      <span>Akun</span>
-    </button>
-  </nav>
-
-  <!-- Mobile Menu Overlay - Full navigation panel -->
-  <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="toggleMobileMenu()">
-    <div class="mobile-menu-panel" onclick="event.stopPropagation()">
-      <div class="mobile-menu-panel__header">
-        <div class="mobile-menu-panel__user">
-          <div class="mobile-menu-panel__avatar" id="mobileUserAvatar"></div>
-          <div class="mobile-menu-panel__user-info">
-            <span class="mobile-menu-panel__user-name" id="mobileUserName">Guest</span>
-            <span class="mobile-menu-panel__user-role" id="mobileUserRole">-</span>
-          </div>
-        </div>
-        <button type="button" class="mobile-menu-panel__close" onclick="toggleMobileMenu()">
-          <i data-lucide="x"></i>
-        </button>
-      </div>
-      <div class="mobile-menu-panel__content">
-        <!-- Dashboard Section -->
-        <div class="mobile-menu-section">
-          <p class="mobile-menu-section__label">Dashboard</p>
-          <button type="button" class="mobile-menu-item" onclick="selectMenu(event,'dashboard')" data-menu-target="dashboard">
-            <i data-lucide="layout-dashboard"></i>
-            <span>Dashboard</span>
-          </button>
-        </div>
-        
-        <!-- Operasional Section -->
-        <div class="mobile-menu-section">
-          <p class="mobile-menu-section__label">Operasional</p>
-          <button type="button" class="mobile-menu-item" onclick="selectMenu(event,'opname')" data-menu-target="opname">
-            <i data-lucide="package-check"></i>
-            <span>Stok Opname</span>
-          </button>
-          <button type="button" class="mobile-menu-item" onclick="selectMenu(event,'persediaan')" data-menu-target="persediaan">
-            <i data-lucide="boxes"></i>
-            <span>Persediaan</span>
-          </button>
-          <button type="button" class="mobile-menu-item" onclick="selectMenu(event,'taskcenter')" data-menu-target="taskcenter">
-            <i data-lucide="clipboard-check"></i>
-            <span>Task Center</span>
-          </button>
-          <button type="button" class="mobile-menu-item" onclick="selectMenu(event,'approvalcenter')" data-menu-target="approvalcenter">
-            <i data-lucide="check-square"></i>
-            <span>Approval Center</span>
-          </button>
-        </div>
-        
-        <!-- Analitik Section -->
-        <div class="mobile-menu-section">
-          <p class="mobile-menu-section__label">Analitik</p>
-          <button type="button" class="mobile-menu-item" onclick="selectMenu(event,'penjualan')" data-menu-target="penjualan">
-            <i data-lucide="bar-chart-3"></i>
-            <span>Penjualan</span>
-          </button>
-          <button type="button" class="mobile-menu-item" onclick="selectMenu(event,'forecast')" data-menu-target="forecast">
-            <i data-lucide="trending-up"></i>
-            <span>Forecasting</span>
-          </button>
-          <button type="button" class="mobile-menu-item" onclick="selectMenu(event,'activity')" data-menu-target="activity">
-            <i data-lucide="activity"></i>
-            <span>Activity Timeline</span>
-          </button>
-        </div>
-        
-        <!-- Master Data Section -->
-        <div class="mobile-menu-section">
-          <p class="mobile-menu-section__label">Master Data</p>
-          <button type="button" class="mobile-menu-item" onclick="selectMenu(event,'audit')" data-menu-target="audit">
-            <i data-lucide="shield"></i>
-            <span>Audit Center</span>
-          </button>
-          <button type="button" class="mobile-menu-item" onclick="selectMenu(event,'reports')" data-menu-target="reports">
-            <i data-lucide="file-bar-chart"></i>
-            <span>Laporan</span>
-          </button>
-        </div>
-        
-        <!-- Sistem Section (Admin only) -->
-        <div class="mobile-menu-section" id="mobileSistemSection" style="display:none;">
-          <p class="mobile-menu-section__label">Sistem</p>
-          <button type="button" class="mobile-menu-item" onclick="selectMenu(event,'admin')" data-menu-target="admin">
-            <i data-lucide="shield-check"></i>
-            <span>Admin Panel</span>
-          </button>
-        </div>
-        
-        <!-- Logout -->
-        <div class="mobile-menu-section mobile-menu-section--footer">
-          <button type="button" class="mobile-menu-item mobile-menu-item--logout" onclick="performLogout()">
-            <i data-lucide="log-out"></i>
-            <span>Keluar</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="opnameQtyModal" class="app-modal" aria-hidden="true">
-    <div class="app-modal__backdrop" data-opname-qty-close></div>
-    <div class="app-modal__dialog opname-qty-dialog" role="dialog" aria-modal="true" aria-labelledby="opnameQtyModalTitle">
-      <button type="button" class="app-modal__close" data-opname-qty-close aria-label="Tutup">
-        <i data-lucide="x"></i>
-      </button>
-      <div class="opname-qty-dialog__icon">
-        <i data-lucide="package-check"></i>
-      </div>
-      <p class="section-eyebrow">Stok Opname</p>
-      <h3 id="opnameQtyModalTitle" class="opname-qty-dialog__title">-</h3>
-      <p id="opnameQtyModalSku" class="opname-qty-dialog__sku"></p>
-      <div class="opname-qty-dialog__stats">
-        <div class="opname-qty-stat">
-          <span>Stok Sistem</span>
-          <strong id="opnameQtyModalSistem">0</strong>
-        </div>
-        <div class="opname-qty-stat opname-qty-stat--input">
-          <span>Qty Fisik</span>
-          <div class="opname-qty-stepper">
-            <button type="button" class="opname-qty-stepper__btn" id="opnameQtyDec" aria-label="Kurangi">−</button>
-            <input type="number" id="opnameQtyModalInput" min="0" step="1" inputmode="numeric" placeholder="0">
-            <button type="button" class="opname-qty-stepper__btn" id="opnameQtyInc" aria-label="Tambah">+</button>
-          </div>
-        </div>
-      </div>
-      <div id="opnameQtySelisihPreview" class="opname-qty-selisih" hidden></div>
-      <div class="app-modal__actions">
-        <button type="button" class="btn-secondary" id="opnameQtyModalCancel">Batal</button>
-        <button type="button" class="btn-primary" id="opnameQtyModalConfirm"><i data-lucide="check"></i><span>Simpan</span></button>
-      </div>
-    </div>
-  </div>
+  
 
   <div id="loader">
     <div class="loader-content">
@@ -1197,7 +1025,6 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script src="/js/dashboard.js?v=opname-history-20260521e"></script>
-  <script src="/js/dashboard-opname-perintah.js?v=opname-kategori-20260521"></script>
   <script>
     lucide.createIcons();
   </script>
