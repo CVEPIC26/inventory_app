@@ -42,67 +42,7 @@
       </button>
     </div>
   </header>
-  <!-- Login-first auth gate -->
-  <section id="loginModal" class="auth-gate" aria-label="Login dashboard">
-    <div class="auth-gate__shell">
-      <div class="auth-hero-panel">
-        <div class="auth-brand-mark">
-          <img src="/assets/logo.png" alt="CV EPIC Warehouse">
-          <div>
-            <p>Inventory Control Suite</p>
-            <h1>CV EPIC Warehouse</h1>
-          </div>
-        </div>
-        <div class="auth-hero-copy">
-          <h2>Masuk untuk mengelola stok, opname, dan persediaan warehouse.</h2>
-          <p>Dashboard dikunci sampai sesi user aktif agar data operasional tetap aman dan setiap akses mengikuti role.</p>
-        </div>
-        <div class="auth-capability-grid">
-          <div>
-            <strong>Sales</strong>
-            <span>Monitoring penjualan dan outlet.</span>
-          </div>
-          <div>
-            <strong>Stock</strong>
-            <span>Kontrol persediaan warehouse.</span>
-          </div>
-          <div>
-            <strong>Opname</strong>
-            <span>Input dan sesuaikan hasil SO.</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="auth-login-card">
-        <p class="section-eyebrow">Secure Access</p>
-        <h3>Masuk ke Dashboard</h3>
-        <p class="page-caption" id="loginModeCaption">Pilih akses user untuk operasional atau admin untuk pengaturan penuh.</p>
-        <div class="login-mode-tabs" role="tablist" aria-label="Pilihan akses login">
-          <button type="button" id="loginModeUser" class="active-tab" onclick="setLoginMode('user')">
-            <i data-lucide="user-check"></i>
-            User Operasional
-          </button>
-          <button type="button" id="loginModeAdmin" onclick="setLoginMode('admin')">
-            <i data-lucide="shield-check"></i>
-            Admin
-          </button>
-        </div>
-        <div class="auth-mode-note">Gunakan akun sesuai role. User operasional diarahkan ke menu Stok Opname.</div>
-        <label class="filter-control">
-          <span>Username</span>
-          <input type="text" id="loginUsername" placeholder="Username" autocomplete="username">
-        </label>
-        <label class="filter-control">
-          <span>Password</span>
-          <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter'){event.preventDefault();performLogin();}">
-        </label>
-        <div class="login-actions">
-          <button class="btn-primary auth-submit" onclick="performLogin()">Masuk</button>
-        </div>
-      </div>
-    </div>
-  </section>
-  <aside class="sidebar" id="mainSidebar">
+<aside class="sidebar" id="mainSidebar">
     <div class="sidebar-brand">
       <div class="sidebar-brand__logo">
         <img src="/assets/logo.png" alt="CV EPIC Warehouse">
